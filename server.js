@@ -31,7 +31,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 // ── Config mail (depuis variables d'environnement) ──────────────────────────
 function getTransporter() {
   return nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
     auth: {
       user: process.env.MAIL_USER,
       pass: process.env.MAIL_PASS
