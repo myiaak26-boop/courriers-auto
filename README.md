@@ -16,11 +16,11 @@ courriers-auto/
 
 ## Variables d'environnement (obligatoires sur Render)
 
-| Variable     | Valeur                                      |
-|--------------|---------------------------------------------|
-| `MAIL_USER`  | amadoukeita5263@gmail.com                   |
-| `MAIL_PASS`  | (mot de passe d'application Gmail)          |
-| `MAIL_TO`    | aboubacar.bangoura@primature.gov.gn         |
+| Variable           | Valeur                                      |
+|--------------------|---------------------------------------------|
+| `SENDGRID_API_KEY` | (clé API SendGrid)                          |
+| `MAIL_FROM`        | amadoukeita5263@gmail.com                   |
+| `MAIL_TO`          | aboubacar.bangoura@primature.gov.gn         |
 
 ## Déploiement sur Render.com
 

@@ -4,7 +4,7 @@
 
 const express = require('express');
 const multer  = require('multer');
-const nodemailer = require('nodemailer');
+const sgMail  = require('@sendgrid/mail');
 const XLSX    = require('xlsx');
 const path    = require('path');
 const fs      = require('fs');
@@ -28,20 +28,9 @@ const upload = multer({
 app.use(express.json({ limit: '20mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ── Config mail (depuis variables d'environnement) ──────────────────────────
-function getTransporter() {
-  return nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
-    auth: {
-      user: process.env.MAIL_USER,
-      pass: process.env.MAIL_PASS
-    },
-    connectionTimeout: 15000,
-    greetingTimeout: 10000,
-    socketTimeout: 30000
-  });
+// ── Config mail (SendGrid) ──────────────────────────────────────────────────
+if (process.env.SENDGRID_API_KEY) {
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 }
 
 // ── ROUTE : Upload + parsing ─────────────────────────────────────────────────
@@ -108,8 +97,8 @@ app.post('/api/send-mail', express.json({ limit: '20mb' }), async (req, res) => 
   try {
     const { csvText, mode, dateDebut, dateFin, mailTo } = req.body;
     if (!csvText) return res.status(400).json({ error: 'Données manquantes.' });
-    if (!process.env.MAIL_USER || !process.env.MAIL_PASS) {
-      return res.status(500).json({ error: 'Configuration mail manquante sur le serveur.' });
+    if (!process.env.SENDGRID_API_KEY) {
+      return res.status(500).json({ error: 'Clé API SendGrid manquante sur le serveur.' });
     }
 
     const rows = processCSV(csvText);
@@ -119,23 +108,23 @@ app.post('/api/send-mail', express.json({ limit: '20mb' }), async (req, res) => 
     const { subject, text } = buildMailContent(mode || 'all', dateDebut || '', dateFin || '');
     const recipient = mailTo || process.env.MAIL_TO || 'aboubacar.bangoura@primature.gov.gn';
 
-    const transporter = getTransporter();
-    await transporter.sendMail({
-      from: process.env.MAIL_USER,
+    await sgMail.send({
       to: recipient,
+      from: process.env.MAIL_FROM || 'amadoukeita5263@gmail.com',
       subject,
       text,
       attachments: [{
         filename: result.fileName,
-        content: Buffer.from(result.xml, 'utf8'),
-        contentType: 'application/vnd.ms-excel'
+        content: Buffer.from(result.xml, 'utf8').toString('base64'),
+        type: 'application/vnd.ms-excel',
+        disposition: 'attachment'
       }]
     });
 
     res.json({ success: true, message: `Mail envoyé à ${recipient}`, subject });
   } catch (err) {
-    console.error('Erreur envoi mail:', err);
-    res.status(500).json({ error: 'Erreur envoi mail : ' + err.message });
+    console.error('Erreur envoi mail:', err.response?.body || err);
+    res.status(500).json({ error: 'Erreur envoi mail : ' + (err.response?.body?.message || err.message) });
   }
 });
 
