@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Courriers Auto — Primature</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #0f2545;
+  --blue: #1a3f7a;
+  --accent: #c8960c;
+  --accent2: #e8b800;
+  --green: #0e7a4e;
+  --red: #b91c1c;
+  --bg: #f0f4fa;
+  --white: #ffffff;
+  --border: #dce6f5;
+  --text: #1a2540;
+  --muted: #6b7a99;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+header {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--blue) 100%);
+  padding: 0 24px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 4px 24px rgba(15,37,69,0.25);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.logo-badge {
+  width: 38px; height: 38px;
+  background: var(--accent);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 16px;
+  color: var(--navy);
+  flex-shrink: 0;
+}
+header h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: white;
+  letter-spacing: 0.03em;
+}
+header p { font-size: 12px; color: rgba(255,255,255,0.6); }
+
+main { max-width: 780px; margin: 0 auto; padding: 32px 20px 60px; }
+
+/* Stepper */
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 32px;
+  background: white;
+  border-radius: 16px;
+  padding: 16px 20px;
+  box-shadow: 0 2px 12px rgba(15,37,69,0.08);
+}
+.step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  position: relative;
+}
+.step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: -8px;
+  width: 16px;
+  height: 2px;
+  background: var(--border);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+}
+.step.done:not(:last-child)::after { background: var(--green); }
+.step-num {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--border);
+  color: var(--muted);
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+.step.active .step-num { background: var(--accent); color: var(--navy); }
+.step.done .step-num { background: var(--green); color: white; }
+.step-label { font-size: 12px; font-weight: 500; color: var(--muted); line-height: 1.3; }
+.step.active .step-label { color: var(--navy); font-weight: 600; }
+.step.done .step-label { color: var(--green); }
+
+/* Cards */
+.card {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(15,37,69,0.08);
+  padding: 28px;
+  margin-bottom: 20px;
+  display: none;
+}
+.card.active { display: block; animation: fadeUp 0.35s ease; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.card-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 6px;
+}
+.card-subtitle { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
+
+/* Upload zone */
+.drop-zone {
+  border: 2.5px dashed var(--border);
+  border-radius: 16px;
+  padding: 40px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #fafcff;
+}
+.drop-zone:hover, .drop-zone.drag {
+  border-color: var(--accent);
+  background: #fffbf0;
+}
+.drop-icon { font-size: 48px; margin-bottom: 12px; }
+.drop-title { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
+.drop-sub { font-size: 13px; color: var(--muted); }
+#fileInput { display: none; }
+
+/* Badges */
+.badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.badge-green { background: #d1fae5; color: #065f46; }
+.badge-blue  { background: #dbeafe; color: #1e40af; }
+.badge-gold  { background: #fef3c7; color: #92400e; }
+.badge-red   { background: #fee2e2; color: #991b1b; }
+
+/* Mode selector */
+.mode-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 20px; }
+.mode-card {
+  border: 2.5px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex; align-items: flex-start; gap: 14px;
+}
+.mode-card:hover { border-color: var(--accent); background: #fffbf0; }
+.mode-card.selected { border-color: var(--blue); background: #f0f5ff; }
+.mode-icon { font-size: 28px; flex-shrink: 0; }
+.mode-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 3px; }
+.mode-desc { font-size: 13px; color: var(--muted); }
+input[type="radio"] { display: none; }
+
+/* Date fields */
+.date-row { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 20px; }
+.date-field { flex: 1; min-width: 160px; }
+.date-field label { display: block; font-size: 13px; font-weight: 600; color: var(--navy); margin-bottom: 6px; }
+.date-field input {
+  width: 100%;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--navy);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.date-field input:focus { border-color: var(--blue); }
+
+/* Buttons */
+.btn {
+  border: none;
+  border-radius: 12px;
+  padding: 13px 24px;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: var(--navy);
+  box-shadow: 0 4px 14px rgba(200,150,12,0.3);
+}
+.btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(200,150,12,0.4); }
+.btn-success {
+  background: linear-gradient(135deg, var(--green), #16a34a);
+  color: white;
+  box-shadow: 0 4px 14px rgba(14,122,78,0.3);
+}
+.btn-success:hover:not(:disabled) { transform: translateY(-1px); }
+.btn-outline {
+  background: white;
+  color: var(--navy);
+  border: 2px solid var(--border);
+}
+.btn-outline:hover:not(:disabled) { border-color: var(--navy); }
+.btn-mail {
+  background: linear-gradient(135deg, #1d4ed8, #2563eb);
+  color: white;
+  box-shadow: 0 4px 14px rgba(29,78,216,0.3);
+}
+.btn-mail:hover:not(:disabled) { transform: translateY(-1px); }
+.btn-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+
+/* Alert */
+.alert {
+  border-radius: 12px;
+  padding: 14px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 16px;
+  display: none;
+}
+.alert.show { display: flex; align-items: center; gap: 10px; }
+.alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+.alert-success { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+.alert-info { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+
+/* Preview table */
+.table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); margin-top: 16px; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th { background: var(--navy); color: white; padding: 10px 12px; text-align: left; font-family: 'Syne', sans-serif; font-weight: 600; white-space: nowrap; }
+td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+tr:nth-child(even) td { background: #f8faff; }
+
+/* Stats row */
+.stats-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+.stat-card {
+  flex: 1; min-width: 120px;
+  background: linear-gradient(135deg, var(--navy), var(--blue));
+  border-radius: 14px;
+  padding: 16px;
+  color: white;
+}
+.stat-card h4 { font-size: 12px; opacity: 0.7; margin-bottom: 4px; }
+.stat-card p { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; }
+
+/* Spinner */
+.spinner {
+  width: 20px; height: 20px;
+  border: 3px solid rgba(255,255,255,0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: none;
+}
+.spinner.show { display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Mail input */
+.mail-input-wrap { margin-bottom: 20px; }
+.mail-input-wrap label { display: block; font-size: 13px; font-weight: 600; color: var(--navy); margin-bottom: 6px; }
+.mail-input-wrap input {
+  width: 100%;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--navy);
+  outline: none;
+}
+.mail-input-wrap input:focus { border-color: var(--blue); }
+
+.result-box {
+  background: #f0fdf4;
+  border: 2px solid #86efac;
+  border-radius: 14px;
+  padding: 20px;
+  text-align: center;
+}
+.result-box h3 { font-family: 'Syne', sans-serif; font-size: 18px; color: var(--green); margin-bottom: 6px; }
+.result-box p { font-size: 14px; color: #166534; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-badge">SC</div>
+  <div>
+    <h1>SECRETARIAT CENTRAL — PRIMATURE</h1>
+    <p>Générateur automatique de situations courriers</p>
+  </div>
+</header>
+
+<main>
+
+  <!-- Stepper -->
+  <div class="stepper">
+    <div class="step active" id="step1-indicator">
+      <div class="step-num">1</div>
+      <div class="step-label">Importer<br>le fichier</div>
+    </div>
+    <div class="step" id="step2-indicator">
+      <div class="step-num">2</div>
+      <div class="step-label">Choisir<br>le rapport</div>
+    </div>
+    <div class="step" id="step3-indicator">
+      <div class="step-num">3</div>
+      <div class="step-label">Générer<br>&amp; télécharger</div>
+    </div>
+    <div class="step" id="step4-indicator">
+      <div class="step-num">4</div>
+      <div class="step-label">Envoyer<br>par mail</div>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 1 : Upload -->
+  <div class="card active" id="card1">
+    <div class="card-title">📂 Étape 1 — Importer le fichier</div>
+    <div class="card-subtitle">Importez le fichier Excel (.xlsx) ou CSV exporté depuis le site GEC.</div>
+
+    <div id="alert1" class="alert alert-error">⚠️ <span id="alert1-msg"></span></div>
+
+    <div class="drop-zone" id="dropZone">
+      <div class="drop-icon">📊</div>
+      <div class="drop-title">Glissez votre fichier ici</div>
+      <div class="drop-sub">ou cliquez pour choisir un fichier Excel (.xlsx) ou CSV</div>
+      <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+    </div>
+
+    <div id="uploadSuccess" style="display:none;margin-top:16px">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px">
+        <span class="badge badge-green">✅ Fichier importé</span>
+        <span class="badge badge-blue" id="fileName"></span>
+        <span class="badge badge-gold" id="lineCount"></span>
+      </div>
+      <div id="previewTable"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn1Next" disabled>
+        <span id="spinner1" class="spinner"></span>
+        Continuer →
+      </button>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 2 : Choix du rapport -->
+  <div class="card" id="card2">
+    <div class="card-title">⚙️ Étape 2 — Type de rapport</div>
+    <div class="card-subtitle">Choisissez le type de situation à générer, puis définissez la période.</div>
+
+    <div class="mode-grid">
+      <div class="mode-card selected" id="mode-all" onclick="selectMode('all')">
+        <div class="mode-icon">📋</div>
+        <div>
+          <div class="mode-title">Situation journalière complète</div>
+          <div class="mode-desc">Tous les courriers arrivés à une date précise</div>
+        </div>
+        <input type="radio" name="mode" value="all" checked>
+      </div>
+      <div class="mode-card" id="mode-assigne" onclick="selectMode('assigne_non_traite')">
+        <div class="mode-icon">⏳</div>
+        <div>
+          <div class="mode-title">Courriers assignés non traités</div>
+          <div class="mode-desc">Courriers assignés mais non traités sur une période (7 derniers jours par défaut)</div>
+        </div>
+        <input type="radio" name="mode" value="assigne_non_traite">
+      </div>
+      <div class="mode-card" id="mode-retard" onclick="selectMode('en_retard')">
+        <div class="mode-icon">🚨</div>
+        <div>
+          <div class="mode-title">Courriers en retard de traitement</div>
+          <div class="mode-desc">Courriers assignés depuis plus de 5 jours non traités (depuis le 1er janvier par défaut)</div>
+        </div>
+        <input type="radio" name="mode" value="en_retard">
+      </div>
+    </div>
+
+    <div class="date-row">
+      <div class="date-field">
+        <label id="labelDebut">📅 Date</label>
+        <input type="date" id="dateDebut">
+      </div>
+      <div class="date-field" id="dateFinWrap">
+        <label>📅 Date de fin</label>
+        <input type="date" id="dateFin">
+      </div>
+    </div>
+    <div id="datePreview" style="font-size:13px;color:var(--muted);margin-bottom:16px;font-style:italic"></div>
+
+    <div class="btn-row">
+      <button class="btn btn-outline" onclick="goToStep(1)">← Retour</button>
+      <button class="btn btn-primary" onclick="goToStep(3)">Continuer →</button>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 3 : Générer -->
+  <div class="card" id="card3">
+    <div class="card-title">⚡ Étape 3 — Générer le rapport</div>
+    <div class="card-subtitle">Le fichier Excel sera généré selon vos critères et téléchargé automatiquement.</div>
+
+    <div id="alert3" class="alert alert-error">⚠️ <span id="alert3-msg"></span></div>
+    <div id="alert3-ok" class="alert alert-success">✅ <span id="alert3-ok-msg"></span></div>
+
+    <div id="summaryBox" style="background:var(--bg);border-radius:14px;padding:18px;margin-bottom:20px">
+      <div style="font-weight:600;font-size:14px;color:var(--navy);margin-bottom:10px">Récapitulatif</div>
+      <div style="display:flex;flex-direction:column;gap:6px;font-size:14px">
+        <div>📊 <strong>Mode :</strong> <span id="sum-mode"></span></div>
+        <div>📅 <strong>Période :</strong> <span id="sum-dates"></span></div>
+        <div>📁 <strong>Lignes importées :</strong> <span id="sum-lines"></span></div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-outline" onclick="goToStep(2)">← Retour</button>
+      <button class="btn btn-primary" id="btnGenerate" onclick="generateFile()">
+        <span id="spinner3" class="spinner"></span>
+        ⚡ Générer &amp; Télécharger
+      </button>
+      <button class="btn btn-success" id="btnToMail" onclick="goToStep(4)" style="display:none">
+        Envoyer par mail →
+      </button>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 4 : Mail -->
+  <div class="card" id="card4">
+    <div class="card-title">📧 Étape 4 — Envoyer par mail</div>
+    <div class="card-subtitle">Le rapport généré sera envoyé en pièce jointe à l'adresse indiquée.</div>
+
+    <div id="alert4" class="alert alert-error">⚠️ <span id="alert4-msg"></span></div>
+    <div id="alert4-ok" class="alert alert-success">✅ <span id="alert4-ok-msg"></span></div>
+
+    <div class="mail-input-wrap">
+      <label>Adresse e-mail du destinataire</label>
+      <input type="email" id="mailTo" value="aboubacar.bangoura@primature.gov.gn" placeholder="email@exemple.com">
+    </div>
+
+    <div style="background:var(--bg);border-radius:14px;padding:16px;margin-bottom:20px;font-size:13px;color:var(--muted)">
+      <strong style="color:var(--navy)">Sujet du mail :</strong><br>
+      <span id="mailSubjectPreview" style="font-style:italic"></span>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-outline" onclick="goToStep(3)">← Retour</button>
+      <button class="btn btn-mail" id="btnSendMail" onclick="sendMail()">
+        <span id="spinner4" class="spinner"></span>
+        📧 Envoyer le mail
+      </button>
+    </div>
+
+    <div id="mailSuccess" style="display:none;margin-top:20px" class="result-box">
+      <h3>✅ Mail envoyé avec succès !</h3>
+      <p id="mailSuccessMsg"></p>
+      <button class="btn btn-outline" style="margin-top:14px" onclick="resetAll()">🔄 Nouveau rapport</button>
+    </div>
+  </div>
+
+</main>
+
+<script>
+let csvText = '';
+let totalLines = 0;
+let currentMode = 'all';
+let generatedFileName = '';
+
+// ── Navigation ────────────────────────────────────────────────────────────
+function goToStep(n) {
+  for (let i = 1; i <= 4; i++) {
+    document.getElementById('card' + i).classList.remove('active');
+    const ind = document.getElementById('step' + i + '-indicator');
+    ind.classList.remove('active');
+  }
+  document.getElementById('card' + n).classList.add('active');
+  document.getElementById('step' + n + '-indicator').classList.add('active');
+
+  // Marquer les étapes précédentes comme "done"
+  for (let i = 1; i < n; i++) {
+    document.getElementById('step' + i + '-indicator').classList.add('done');
+  }
+
+  if (n === 3) updateSummary();
+  if (n === 4) updateMailSubjectPreview();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── Upload ────────────────────────────────────────────────────────────────
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('drag');
+  if (e.dataTransfer.files[0]) handleUpload(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', e => { if (e.target.files[0]) handleUpload(e.target.files[0]); });
+
+async function handleUpload(file) {
+  const sp = document.getElementById('spinner1');
+  const btn = document.getElementById('btn1Next');
+  const alert1 = document.getElementById('alert1');
+  const alert1msg = document.getElementById('alert1-msg');
+
+  alert1.classList.remove('show');
+  sp.classList.add('show');
+  btn.disabled = true;
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const res = await fetch('/api/upload', { method: 'POST', body: formData });
+    const data = await res.json();
+
+    if (!res.ok || data.error) {
+      alert1msg.textContent = data.error || 'Erreur inconnue';
+      alert1.classList.add('show');
+      sp.classList.remove('show');
+      return;
+    }
+
+    csvText = data.csvText;
+    totalLines = data.count;
+
+    document.getElementById('fileName').textContent = '📄 ' + file.name;
+    document.getElementById('lineCount').textContent = totalLines + ' courrier(s)';
+
+    // Preview tableau
+    const cols = data.preview.length
+      ? Object.keys(data.preview[0])
+      : [];
+    let html = '<div class="table-wrap"><table><thead><tr>';
+    cols.forEach(c => html += `<th>${c}</th>`);
+    html += '</tr></thead><tbody>';
+    data.preview.forEach(row => {
+      html += '<tr>';
+      cols.forEach(c => html += `<td>${row[c] || ''}</td>`);
+      html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+    if (data.preview.length < totalLines) {
+      html += `<p style="font-size:12px;color:var(--muted);margin-top:8px;text-align:center">… et ${totalLines - data.preview.length} autre(s) ligne(s)</p>`;
+    }
+    document.getElementById('previewTable').innerHTML = html;
+    document.getElementById('uploadSuccess').style.display = 'block';
+    btn.disabled = false;
+
+    // Préremplir dates selon le mode
+    setDefaultDates();
+
+  } catch(e) {
+    alert1msg.textContent = 'Erreur réseau : ' + e.message;
+    alert1.classList.add('show');
+  }
+  sp.classList.remove('show');
+}
+
+// ── Mode ──────────────────────────────────────────────────────────────────
+function selectMode(mode) {
+  currentMode = mode;
+  ['all', 'assigne_non_traite', 'en_retard'].forEach(m => {
+    const card = document.getElementById('mode-' + (m === 'all' ? 'all' : m === 'assigne_non_traite' ? 'assigne' : 'retard'));
+    card.classList.toggle('selected', m === mode);
+  });
+  setDefaultDates();
+  updateDateUI();
+  updateDatePreview();
+}
+
+function setDefaultDates() {
+  const today = new Date();
+  const iso = today.toISOString().slice(0, 10);
+
+  if (currentMode === 'all') {
+    document.getElementById('dateDebut').value = iso;
+    document.getElementById('dateFin').value = '';
+  } else if (currentMode === 'assigne_non_traite') {
+    const start = new Date(today);
+    start.setDate(start.getDate() - 7);
+    document.getElementById('dateDebut').value = start.toISOString().slice(0, 10);
+    document.getElementById('dateFin').value = iso;
+  } else if (currentMode === 'en_retard') {
+    document.getElementById('dateDebut').value = today.getFullYear() + '-01-01';
+    document.getElementById('dateFin').value = iso;
+  }
+  updateDatePreview();
+}
+
+function updateDateUI() {
+  const wrap = document.getElementById('dateFinWrap');
+  const label = document.getElementById('labelDebut');
+  if (currentMode === 'all') {
+    wrap.style.display = 'none';
+    label.textContent = '📅 Date';
+  } else {
+    wrap.style.display = 'block';
+    label.textContent = '📅 Date de début';
+  }
+}
+
+function updateDatePreview() {
+  const debut = document.getElementById('dateDebut').value;
+  const fin = document.getElementById('dateFin').value;
+  const el = document.getElementById('datePreview');
+  const mois = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+  const jours = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+
+  if (currentMode === 'all' && debut) {
+    const d = new Date(debut + 'T00:00:00');
+    if (!isNaN(d)) el.textContent = '📌 Rapport pour le ' + jours[d.getDay()] + ' ' + d.getDate() + ' ' + mois[d.getMonth()] + ' ' + d.getFullYear();
+  } else if (debut && fin) {
+    const d1 = new Date(debut + 'T00:00:00');
+    const d2 = new Date(fin + 'T00:00:00');
+    if (!isNaN(d1) && !isNaN(d2)) el.textContent = '📌 Période : du ' + d1.getDate() + ' ' + mois[d1.getMonth()] + ' ' + d1.getFullYear() + ' au ' + d2.getDate() + ' ' + mois[d2.getMonth()] + ' ' + d2.getFullYear();
+  } else {
+    el.textContent = '';
+  }
+}
+
+document.getElementById('dateDebut').addEventListener('change', updateDatePreview);
+document.getElementById('dateFin').addEventListener('change', updateDatePreview);
+
+// Init
+updateDateUI();
+setDefaultDates();
+
+// ── Summary ───────────────────────────────────────────────────────────────
+function updateSummary() {
+  const labels = { all: 'Situation journalière complète', assigne_non_traite: 'Assignés non traités', en_retard: 'En retard de traitement' };
+  document.getElementById('sum-mode').textContent = labels[currentMode];
+  document.getElementById('sum-lines').textContent = totalLines + ' courrier(s)';
+  const debut = document.getElementById('dateDebut').value;
+  const fin = document.getElementById('dateFin').value;
+  const mois = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+  let datesLabel = '—';
+  if (currentMode === 'all' && debut) {
+    const d = new Date(debut + 'T00:00:00');
+    if (!isNaN(d)) datesLabel = d.getDate() + ' ' + mois[d.getMonth()] + ' ' + d.getFullYear();
+  } else if (debut && fin) {
+    const d1 = new Date(debut + 'T00:00:00'), d2 = new Date(fin + 'T00:00:00');
+    if (!isNaN(d1) && !isNaN(d2)) datesLabel = d1.getDate() + ' ' + mois[d1.getMonth()] + ' → ' + d2.getDate() + ' ' + mois[d2.getMonth()] + ' ' + d2.getFullYear();
+  }
+  document.getElementById('sum-dates').textContent = datesLabel;
+}
+
+// ── Générer ───────────────────────────────────────────────────────────────
+async function generateFile() {
+  const sp = document.getElementById('spinner3');
+  const btn = document.getElementById('btnGenerate');
+  const alert3 = document.getElementById('alert3');
+  const alert3ok = document.getElementById('alert3-ok');
+  alert3.classList.remove('show'); alert3ok.classList.remove('show');
+  sp.classList.add('show'); btn.disabled = true;
+
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        csvText,
+        mode: currentMode,
+        dateDebut: document.getElementById('dateDebut').value,
+        dateFin: document.getElementById('dateFin').value
+      })
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      document.getElementById('alert3-msg').textContent = data.error || 'Erreur inconnue';
+      alert3.classList.add('show');
+    } else {
+      generatedFileName = decodeURIComponent(res.headers.get('X-File-Name') || 'rapport.xls');
+      const count = res.headers.get('X-Count') || '?';
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = generatedFileName;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+
+      document.getElementById('alert3-ok-msg').textContent = `Fichier généré avec ${count} courrier(s) — téléchargement démarré.`;
+      alert3ok.classList.add('show');
+      document.getElementById('btnToMail').style.display = 'inline-flex';
+    }
+  } catch(e) {
+    document.getElementById('alert3-msg').textContent = 'Erreur réseau : ' + e.message;
+    alert3.classList.add('show');
+  }
+  sp.classList.remove('show'); btn.disabled = false;
+}
+
+// ── Mail ──────────────────────────────────────────────────────────────────
+function updateMailSubjectPreview() {
+  const debut = document.getElementById('dateDebut').value;
+  const fin = document.getElementById('dateFin').value;
+  const mois = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+  const jours = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+  let label = '';
+  if (currentMode === 'all' && debut) {
+    const d = new Date(debut + 'T00:00:00');
+    if (!isNaN(d)) label = jours[d.getDay()] + ' ' + d.getDate() + ' ' + mois[d.getMonth()] + ' ' + d.getFullYear();
+  } else if (debut && fin) {
+    const d1 = new Date(debut + 'T00:00:00'), d2 = new Date(fin + 'T00:00:00');
+    if (!isNaN(d1) && !isNaN(d2)) label = 'Du ' + d1.getDate() + ' ' + mois[d1.getMonth()] + ' au ' + d2.getDate() + ' ' + mois[d2.getMonth()] + ' ' + d2.getFullYear();
+  }
+  const titles = {
+    all: 'SITUATION JOURNALIÈRE DES COURRIERS ARRIVÉS',
+    assigne_non_traite: 'SITUATION DES COURRIERS ASSIGNÉS NON TRAITÉS',
+    en_retard: 'SITUATION DES COURRIERS EN RETARD DE TRAITEMENT'
+  };
+  document.getElementById('mailSubjectPreview').textContent = (titles[currentMode] || '') + (label ? ' — ' + label : '');
+}
+
+async function sendMail() {
+  const sp = document.getElementById('spinner4');
+  const btn = document.getElementById('btnSendMail');
+  const alert4 = document.getElementById('alert4');
+  const alert4ok = document.getElementById('alert4-ok');
+  alert4.classList.remove('show'); alert4ok.classList.remove('show');
+  sp.classList.add('show'); btn.disabled = true;
+
+  try {
+    const res = await fetch('/api/send-mail', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        csvText,
+        mode: currentMode,
+        dateDebut: document.getElementById('dateDebut').value,
+        dateFin: document.getElementById('dateFin').value,
+        mailTo: document.getElementById('mailTo').value
+      })
+    });
+    const data = await res.json();
+    if (!res.ok || data.error) {
+      document.getElementById('alert4-msg').textContent = data.error || 'Erreur inconnue';
+      alert4.classList.add('show');
+    } else {
+      document.getElementById('mailSuccess').style.display = 'block';
+      document.getElementById('mailSuccessMsg').textContent = data.message;
+      btn.style.display = 'none';
+    }
+  } catch(e) {
+    document.getElementById('alert4-msg').textContent = 'Erreur réseau : ' + e.message;
+    alert4.classList.add('show');
+  }
+  sp.classList.remove('show'); btn.disabled = false;
+}
+
+function resetAll() {
+  csvText = ''; totalLines = 0; currentMode = 'all'; generatedFileName = '';
+  document.getElementById('uploadSuccess').style.display = 'none';
+  document.getElementById('fileInput').value = '';
+  document.getElementById('btn1Next').disabled = true;
+  document.getElementById('btnToMail').style.display = 'none';
+  document.getElementById('mailSuccess').style.display = 'none';
+  document.getElementById('btnSendMail').style.display = 'inline-flex';
+  document.querySelectorAll('.alert').forEach(a => a.classList.remove('show'));
+  // Reset stepper
+  for (let i = 1; i <= 4; i++) {
+    const ind = document.getElementById('step' + i + '-indicator');
+    ind.classList.remove('active', 'done');
+  }
+  goToStep(1);
+}
+
+document.getElementById('btn1Next').addEventListener('click', () => goToStep(2));
+</script>
+</body>
+</html>

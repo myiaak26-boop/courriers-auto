@@ -1,0 +1,18 @@
+{
+  "name": "courriers-auto",
+  "version": "1.0.0",
+  "description": "Générateur de situations courriers - Primature",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.7",
+    "xlsx": "^0.18.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
