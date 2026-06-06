@@ -31,13 +31,17 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // ── Config mail (Gmail SMTP via Nodemailer) ─────────────────────────────────
 const transporter = nodemailer.createTransport({
+  service: 'gmail',
   host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
+  port: 465,
+  secure: true,
   auth: {
     user: process.env.GMAIL_USER || 'amadoukeita5263@gmail.com',
     pass: process.env.GMAIL_PASS
-  }
+  },
+  connectionTimeout: 15000,
+  greetingTimeout: 15000,
+  socketTimeout: 30000
 });
 
 // ── ROUTE : Upload + parsing ─────────────────────────────────────────────────
