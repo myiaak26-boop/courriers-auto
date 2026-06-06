@@ -347,13 +347,9 @@ function buildMailContent(mode, dateDebut, dateFin) {
 <div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08)">
 <div style="background:linear-gradient(135deg,#0f2545,#1a3f7a);padding:20px 28px">
 <h1 style="color:#ffffff;font-size:18px;margin:0;font-weight:700">SECRÉTARIAT CENTRAL — PRIMATURE</h1>
-<p style="color:rgba(255,255,255,0.6);font-size:12px;margin:4px 0 0">Générateur automatique de situations courriers</p>
 </div>
 <div style="padding:28px;color:#1a2540;font-size:14px;line-height:1.6">
 ${bodyText}
-</div>
-<div style="background:#f0f4fa;padding:16px 28px;font-size:12px;color:#6b7a99;border-top:1px solid #dce6f5">
-<p style="margin:0">Ce message a été généré automatiquement. Merci de ne pas répondre directement.</p>
 </div>
 </div></body></html>`;
   }
