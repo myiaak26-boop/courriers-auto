@@ -1,24 +1,19 @@
-/**
- * server.js — Serveur Express pour courriers-auto
- */
-
 require('dotenv').config();
 const express = require('express');
 const multer  = require('multer');
 const sgMail  = require('@sendgrid/mail');
 const XLSX    = require('xlsx');
 const path    = require('path');
-const fs      = require('fs');
+const { pool, initDB } = require('./db');
 
 const { processCSV, generateXLS, buildMailContent } = require('./logic');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
-// Config multer — stockage en mémoire
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 20 * 1024 * 1024 }, // 20 MB max
+  limits: { fileSize: 20 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
     if (['.xlsx', '.xls', '.csv'].includes(ext)) cb(null, true);
@@ -29,13 +24,11 @@ const upload = multer({
 app.use(express.json({ limit: '20mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ── Config mail (SendGrid) ──────────────────────────────────────────────────
 if (process.env.SENDGRID_API_KEY) {
   sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 }
 
-// ── ROUTE : Upload + parsing ─────────────────────────────────────────────────
-app.post('/api/upload', upload.single('file'), (req, res) => {
+app.post('/api/upload', upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Aucun fichier reçu.' });
 
@@ -45,7 +38,6 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
     if (ext === '.csv') {
       csvText = req.file.buffer.toString('utf8');
     } else {
-      // Excel → CSV via xlsx
       const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       csvText = XLSX.utils.sheet_to_csv(sheet);
@@ -53,16 +45,34 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
 
     const rows = processCSV(csvText);
 
+    const client = await pool.connect();
+    try {
+      await client.query('DELETE FROM courriers');
+      for (const r of rows) {
+        await client.query(
+          `INSERT INTO courriers (numero, expediteur, objet, date_arrivee, etat, position)
+           VALUES ($1, $2, $3, $4, $5, $6)`,
+          [r.numero, r.expediteur, r.objet, r.dateArrivee || null, r.etat, r.position]
+        );
+      }
+    } finally {
+      client.release();
+    }
+
+    const { rows: dbRows } = await pool.query(
+      'SELECT id, numero, expediteur, objet, date_arrivee, etat, position FROM courriers ORDER BY id'
+    );
+
     res.json({
       success: true,
-      count: rows.length,
-      csvText,            // on renvoie le CSV parsé pour le réutiliser côté serveur
-      preview: rows.slice(0, 5).map(r => ({
+      count: dbRows.length,
+      rows: dbRows,
+      preview: dbRows.slice(0, 5).map(r => ({
         numero: r.numero,
         expediteur: r.expediteur,
         objet: r.objet,
         etat: r.etat,
-        dateArrivee: r.dateArrivee
+        dateArrivee: r.date_arrivee
       }))
     });
   } catch (err) {
@@ -70,13 +80,47 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
   }
 });
 
-// ── ROUTE : Générer le fichier XLS ──────────────────────────────────────────
-app.post('/api/generate', express.json({ limit: '20mb' }), (req, res) => {
+app.get('/api/courriers', async (req, res) => {
   try {
-    const { csvText, mode, dateDebut, dateFin } = req.body;
-    if (!csvText) return res.status(400).json({ error: 'Données manquantes.' });
+    const { rows } = await pool.query('SELECT * FROM courriers ORDER BY id');
+    res.json({ success: true, rows });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
-    const rows = processCSV(csvText);
+app.put('/api/courriers/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { etat, position } = req.body;
+    const { rows } = await pool.query(
+      `UPDATE courriers SET etat = COALESCE($1, etat), position = COALESCE($2, position), updated_at = CURRENT_TIMESTAMP
+       WHERE id = $3 RETURNING *`,
+      [etat ?? null, position ?? null, id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Courrier introuvable.' });
+    res.json({ success: true, row: rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/generate', async (req, res) => {
+  try {
+    const { mode, dateDebut, dateFin } = req.body;
+    const { rows: dbRows } = await pool.query('SELECT * FROM courriers ORDER BY id');
+    if (!dbRows.length) return res.status(400).json({ error: 'Aucune donnée en base.' });
+
+    const rows = dbRows.map(r => ({
+      numero: r.numero,
+      expediteur: r.expediteur,
+      objet: r.objet,
+      dateArrivee: r.date_arrivee ? dateToString(r.date_arrivee) : '',
+      etat: r.etat,
+      position: r.position,
+      positionSource: r.position
+    }));
+
     const result = generateXLS(rows, rows, mode || 'all', dateDebut || '', dateFin || '');
 
     if (!result) {
@@ -93,16 +137,26 @@ app.post('/api/generate', express.json({ limit: '20mb' }), (req, res) => {
   }
 });
 
-// ── ROUTE : Envoyer par mail ────────────────────────────────────────────────
-app.post('/api/send-mail', express.json({ limit: '20mb' }), async (req, res) => {
+app.post('/api/send-mail', async (req, res) => {
   try {
-    const { csvText, mode, dateDebut, dateFin, mailTo } = req.body;
-    if (!csvText) return res.status(400).json({ error: 'Données manquantes.' });
+    const { mode, dateDebut, dateFin, mailTo } = req.body;
     if (!process.env.SENDGRID_API_KEY) {
       return res.status(500).json({ error: 'Clé API SendGrid manquante sur le serveur.' });
     }
 
-    const rows = processCSV(csvText);
+    const { rows: dbRows } = await pool.query('SELECT * FROM courriers ORDER BY id');
+    if (!dbRows.length) return res.status(400).json({ error: 'Aucune donnée en base.' });
+
+    const rows = dbRows.map(r => ({
+      numero: r.numero,
+      expediteur: r.expediteur,
+      objet: r.objet,
+      dateArrivee: r.date_arrivee ? dateToString(r.date_arrivee) : '',
+      etat: r.etat,
+      position: r.position,
+      positionSource: r.position
+    }));
+
     const result = generateXLS(rows, rows, mode || 'all', dateDebut || '', dateFin || '');
     if (!result) return res.status(400).json({ error: 'Aucun courrier trouvé pour les critères sélectionnés.' });
 
@@ -132,7 +186,17 @@ app.post('/api/send-mail', express.json({ limit: '20mb' }), async (req, res) => 
   }
 });
 
-// ── Démarrage ───────────────────────────────────────────────────────────────
-app.listen(PORT, () => {
-  console.log(`✅ Serveur démarré sur http://localhost:${PORT}`);
+function dateToString(d) {
+  if (!d) return '';
+  if (typeof d === 'string') return d.slice(0, 10);
+  return d.toISOString().slice(0, 10);
+}
+
+initDB().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Serveur démarré sur http://localhost:${PORT}`);
+  });
+}).catch(err => {
+  console.error('Erreur init DB:', err);
+  process.exit(1);
 });

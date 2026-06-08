@@ -1,0 +1,12 @@
+CREATE TABLE IF NOT EXISTS courriers (
+  id SERIAL PRIMARY KEY,
+  numero VARCHAR(50) NOT NULL DEFAULT '',
+  expediteur VARCHAR(255) NOT NULL DEFAULT '',
+  objet TEXT NOT NULL DEFAULT '',
+  date_arrivee DATE,
+  etat VARCHAR(50) DEFAULT 'Non assigné',
+  position VARCHAR(255) DEFAULT '',
+  jours_retard INTEGER DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

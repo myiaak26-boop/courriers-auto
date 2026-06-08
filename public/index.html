@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Courriers Auto — Primature</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0f2545">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/icons/icon-192.svg">
 <style>
 :root {
   --navy: #0f2545;
@@ -58,9 +63,8 @@ header h1 {
 }
 header p { font-size: 12px; color: rgba(255,255,255,0.6); }
 
-main { max-width: 780px; margin: 0 auto; padding: 32px 20px 60px; }
+main { max-width: 960px; margin: 0 auto; padding: 32px 20px 60px; }
 
-/* Stepper */
 .stepper {
   display: flex;
   align-items: center;
@@ -108,7 +112,6 @@ main { max-width: 780px; margin: 0 auto; padding: 32px 20px 60px; }
 .step.active .step-label { color: var(--navy); font-weight: 600; }
 .step.done .step-label { color: var(--green); }
 
-/* Cards */
 .card {
   background: white;
   border-radius: 20px;
@@ -131,7 +134,6 @@ main { max-width: 780px; margin: 0 auto; padding: 32px 20px 60px; }
 }
 .card-subtitle { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
 
-/* Upload zone */
 .drop-zone {
   border: 2.5px dashed var(--border);
   border-radius: 16px;
@@ -150,7 +152,6 @@ main { max-width: 780px; margin: 0 auto; padding: 32px 20px 60px; }
 .drop-sub { font-size: 13px; color: var(--muted); }
 #fileInput { display: none; }
 
-/* Badges */
 .badge {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 6px 14px;
@@ -163,7 +164,6 @@ main { max-width: 780px; margin: 0 auto; padding: 32px 20px 60px; }
 .badge-gold  { background: #fef3c7; color: #92400e; }
 .badge-red   { background: #fee2e2; color: #991b1b; }
 
-/* Mode selector */
 .mode-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 20px; }
 .mode-card {
   border: 2.5px solid var(--border);
@@ -180,7 +180,6 @@ main { max-width: 780px; margin: 0 auto; padding: 32px 20px 60px; }
 .mode-desc { font-size: 13px; color: var(--muted); }
 input[type="radio"] { display: none; }
 
-/* Date fields */
 .date-row { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 20px; }
 .date-field { flex: 1; min-width: 160px; }
 .date-field label { display: block; font-size: 13px; font-weight: 600; color: var(--navy); margin-bottom: 6px; }
@@ -197,7 +196,6 @@ input[type="radio"] { display: none; }
 }
 .date-field input:focus { border-color: var(--blue); }
 
-/* Buttons */
 .btn {
   border: none;
   border-radius: 12px;
@@ -236,7 +234,6 @@ input[type="radio"] { display: none; }
 .btn-mail:hover:not(:disabled) { transform: translateY(-1px); }
 .btn-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
 
-/* Alert */
 .alert {
   border-radius: 12px;
   padding: 14px 18px;
@@ -249,16 +246,45 @@ input[type="radio"] { display: none; }
 .alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
 .alert-success { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
 .alert-info { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+.alert-warning { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
 
-/* Preview table */
 .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); margin-top: 16px; }
 table { width: 100%; border-collapse: collapse; font-size: 12px; }
-th { background: var(--navy); color: white; padding: 10px 12px; text-align: left; font-family: 'Syne', sans-serif; font-weight: 600; white-space: nowrap; }
+th {
+  background: var(--navy);
+  color: white;
+  padding: 10px 12px;
+  text-align: left;
+  font-family: 'Syne', sans-serif;
+  font-weight: 600;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
 td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
 tr:last-child td { border-bottom: none; }
 tr:nth-child(even) td { background: #f8faff; }
 
-/* Stats row */
+td[contenteditable="true"] {
+  cursor: text;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+td[contenteditable="true"]:hover {
+  background: #fff8e0;
+}
+td[contenteditable="true"]:focus {
+  background: #fff3c4;
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+td.modified {
+  background: #fef3c7 !important;
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
 .stats-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
 .stat-card {
   flex: 1; min-width: 120px;
@@ -270,7 +296,6 @@ tr:nth-child(even) td { background: #f8faff; }
 .stat-card h4 { font-size: 12px; opacity: 0.7; margin-bottom: 4px; }
 .stat-card p { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; }
 
-/* Spinner */
 .spinner {
   width: 20px; height: 20px;
   border: 3px solid rgba(255,255,255,0.3);
@@ -282,7 +307,6 @@ tr:nth-child(even) td { background: #f8faff; }
 .spinner.show { display: inline-block; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Mail input */
 .mail-input-wrap { margin-bottom: 20px; }
 .mail-input-wrap label { display: block; font-size: 13px; font-weight: 600; color: var(--navy); margin-bottom: 6px; }
 .mail-input-wrap input {
@@ -306,6 +330,31 @@ tr:nth-child(even) td { background: #f8faff; }
 }
 .result-box h3 { font-family: 'Syne', sans-serif; font-size: 18px; color: var(--green); margin-bottom: 6px; }
 .result-box p { font-size: 14px; color: #166534; }
+
+.save-status {
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  margin-top: 12px;
+}
+.save-status.saved {
+  background: #d1fae5;
+  color: #065f46;
+}
+.save-status.unsaved {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.table-container {
+  max-height: 500px;
+  overflow-y: auto;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
 </style>
 </head>
 <body>
@@ -319,7 +368,6 @@ tr:nth-child(even) td { background: #f8faff; }
 
 <main>
 
-  <!-- Stepper -->
   <div class="stepper">
     <div class="step active" id="step1-indicator">
       <div class="step-num">1</div>
@@ -327,7 +375,7 @@ tr:nth-child(even) td { background: #f8faff; }
     </div>
     <div class="step" id="step2-indicator">
       <div class="step-num">2</div>
-      <div class="step-label">Choisir<br>le rapport</div>
+      <div class="step-label">Modifier<br>les données</div>
     </div>
     <div class="step" id="step3-indicator">
       <div class="step-num">3</div>
@@ -339,9 +387,8 @@ tr:nth-child(even) td { background: #f8faff; }
     </div>
   </div>
 
-  <!-- ÉTAPE 1 : Upload -->
   <div class="card active" id="card1">
-    <div class="card-title">📂 Étape 1 — Importer le fichier</div>
+    <div class="card-title">Étape 1 — Importer le fichier</div>
     <div class="card-subtitle">Importez le fichier Excel (.xlsx) ou CSV exporté depuis le site GEC.</div>
 
     <div id="alert1" class="alert alert-error">⚠️ <span id="alert1-msg"></span></div>
@@ -354,12 +401,11 @@ tr:nth-child(even) td { background: #f8faff; }
     </div>
 
     <div id="uploadSuccess" style="display:none;margin-top:16px">
-      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px">
-        <span class="badge badge-green">✅ Fichier importé</span>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+        <span class="badge badge-green">Fichier importé</span>
         <span class="badge badge-blue" id="fileName"></span>
         <span class="badge badge-gold" id="lineCount"></span>
       </div>
-      <div id="previewTable"></div>
     </div>
 
     <div class="btn-row">
@@ -370,9 +416,36 @@ tr:nth-child(even) td { background: #f8faff; }
     </div>
   </div>
 
-  <!-- ÉTAPE 2 : Choix du rapport -->
   <div class="card" id="card2">
-    <div class="card-title">⚙️ Étape 2 — Type de rapport</div>
+    <div class="card-title">Étape 2 — Modifier les données</div>
+    <div class="card-subtitle">
+      Modifiez les champs <strong>État</strong> et <strong>Position</strong> directement dans le tableau, puis enregistrez.
+      Les colonnes N°, Expéditeur, Objet et Date sont en lecture seule.
+    </div>
+
+    <div id="alert2" class="alert alert-error">⚠️ <span id="alert2-msg"></span></div>
+    <div id="alert2-ok" class="alert alert-success"> <span id="alert2-ok-msg"></span></div>
+
+    <div id="editableTableWrap"></div>
+
+    <div class="btn-row">
+      <button class="btn btn-success" id="btnSave" onclick="saveChanges()">
+        <span id="spinner2" class="spinner"></span>
+        Enregistrer les modifications
+      </button>
+      <span id="saveStatus" class="save-status"></span>
+    </div>
+
+    <div class="btn-row" style="margin-top:12px">
+      <button class="btn btn-outline" onclick="goToStep(1)">← Retour</button>
+      <button class="btn btn-primary" id="btn2Next" onclick="goToStep(3)" disabled>
+        Continuer →
+      </button>
+    </div>
+  </div>
+
+  <div class="card" id="card3">
+    <div class="card-title">Étape 3 — Choisir le rapport</div>
     <div class="card-subtitle">Choisissez le type de situation à générer, puis définissez la période.</div>
 
     <div class="mode-grid">
@@ -414,28 +487,17 @@ tr:nth-child(even) td { background: #f8faff; }
     </div>
     <div id="datePreview" style="font-size:13px;color:var(--muted);margin-bottom:16px;font-style:italic"></div>
 
-    <div class="btn-row">
-      <button class="btn btn-outline" onclick="goToStep(1)">← Retour</button>
-      <button class="btn btn-primary" onclick="goToStep(3)">Continuer →</button>
-    </div>
-  </div>
-
-  <!-- ÉTAPE 3 : Générer -->
-  <div class="card" id="card3">
-    <div class="card-title">⚡ Étape 3 — Générer le rapport</div>
-    <div class="card-subtitle">Le fichier Excel sera généré selon vos critères et téléchargé automatiquement.</div>
-
-    <div id="alert3" class="alert alert-error">⚠️ <span id="alert3-msg"></span></div>
-    <div id="alert3-ok" class="alert alert-success">✅ <span id="alert3-ok-msg"></span></div>
-
     <div id="summaryBox" style="background:var(--bg);border-radius:14px;padding:18px;margin-bottom:20px">
       <div style="font-weight:600;font-size:14px;color:var(--navy);margin-bottom:10px">Récapitulatif</div>
       <div style="display:flex;flex-direction:column;gap:6px;font-size:14px">
-        <div>📊 <strong>Mode :</strong> <span id="sum-mode"></span></div>
-        <div>📅 <strong>Période :</strong> <span id="sum-dates"></span></div>
-        <div>📁 <strong>Lignes importées :</strong> <span id="sum-lines"></span></div>
+        <div><strong>Mode :</strong> <span id="sum-mode"></span></div>
+        <div><strong>Période :</strong> <span id="sum-dates"></span></div>
+        <div><strong>Courriers en base :</strong> <span id="sum-lines"></span></div>
       </div>
     </div>
+
+    <div id="alert3" class="alert alert-error">⚠️ <span id="alert3-msg"></span></div>
+    <div id="alert3-ok" class="alert alert-success"> <span id="alert3-ok-msg"></span></div>
 
     <div class="btn-row">
       <button class="btn btn-outline" onclick="goToStep(2)">← Retour</button>
@@ -449,13 +511,12 @@ tr:nth-child(even) td { background: #f8faff; }
     </div>
   </div>
 
-  <!-- ÉTAPE 4 : Mail -->
   <div class="card" id="card4">
     <div class="card-title">📧 Étape 4 — Envoyer par mail</div>
     <div class="card-subtitle">Le rapport généré sera envoyé en pièce jointe à l'adresse indiquée.</div>
 
     <div id="alert4" class="alert alert-error">⚠️ <span id="alert4-msg"></span></div>
-    <div id="alert4-ok" class="alert alert-success">✅ <span id="alert4-ok-msg"></span></div>
+    <div id="alert4-ok" class="alert alert-success"> <span id="alert4-ok-msg"></span></div>
 
     <div class="mail-input-wrap">
       <label>Adresse e-mail du destinataire</label>
@@ -476,7 +537,7 @@ tr:nth-child(even) td { background: #f8faff; }
     </div>
 
     <div id="mailSuccess" style="display:none;margin-top:20px" class="result-box">
-      <h3>✅ Mail envoyé avec succès !</h3>
+      <h3>Mail envoyé avec succès !</h3>
       <p id="mailSuccessMsg"></p>
       <button class="btn btn-outline" style="margin-top:14px" onclick="resetAll()">🔄 Nouveau rapport</button>
     </div>
@@ -485,12 +546,12 @@ tr:nth-child(even) td { background: #f8faff; }
 </main>
 
 <script>
-let csvText = '';
+let courriers = [];
 let totalLines = 0;
 let currentMode = 'all';
 let generatedFileName = '';
+let modifiedIds = new Set();
 
-// ── Navigation ────────────────────────────────────────────────────────────
 function goToStep(n) {
   for (let i = 1; i <= 4; i++) {
     document.getElementById('card' + i).classList.remove('active');
@@ -499,18 +560,17 @@ function goToStep(n) {
   }
   document.getElementById('card' + n).classList.add('active');
   document.getElementById('step' + n + '-indicator').classList.add('active');
-
-  // Marquer les étapes précédentes comme "done"
   for (let i = 1; i < n; i++) {
     document.getElementById('step' + i + '-indicator').classList.add('done');
   }
-
-  if (n === 3) updateSummary();
+  if (n === 3) {
+    updateSummary();
+    updateMailSubjectPreview();
+  }
   if (n === 4) updateMailSubjectPreview();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// ── Upload ────────────────────────────────────────────────────────────────
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
 
@@ -547,33 +607,17 @@ async function handleUpload(file) {
       return;
     }
 
-    csvText = data.csvText;
+    courriers = data.rows;
     totalLines = data.count;
+    modifiedIds = new Set();
 
     document.getElementById('fileName').textContent = '📄 ' + file.name;
     document.getElementById('lineCount').textContent = totalLines + ' courrier(s)';
-
-    // Preview tableau
-    const cols = data.preview.length
-      ? Object.keys(data.preview[0])
-      : [];
-    let html = '<div class="table-wrap"><table><thead><tr>';
-    cols.forEach(c => html += `<th>${c}</th>`);
-    html += '</tr></thead><tbody>';
-    data.preview.forEach(row => {
-      html += '<tr>';
-      cols.forEach(c => html += `<td>${row[c] || ''}</td>`);
-      html += '</tr>';
-    });
-    html += '</tbody></table></div>';
-    if (data.preview.length < totalLines) {
-      html += `<p style="font-size:12px;color:var(--muted);margin-top:8px;text-align:center">… et ${totalLines - data.preview.length} autre(s) ligne(s)</p>`;
-    }
-    document.getElementById('previewTable').innerHTML = html;
     document.getElementById('uploadSuccess').style.display = 'block';
+
+    renderEditableTable();
     btn.disabled = false;
 
-    // Préremplir dates selon le mode
     setDefaultDates();
 
   } catch(e) {
@@ -583,7 +627,134 @@ async function handleUpload(file) {
   sp.classList.remove('show');
 }
 
-// ── Mode ──────────────────────────────────────────────────────────────────
+function renderEditableTable() {
+  const wrap = document.getElementById('editableTableWrap');
+  if (!courriers.length) {
+    wrap.innerHTML = '<p style="color:var(--muted)">Aucune donnée.</p>';
+    return;
+  }
+
+  let html = '<div class="table-container"><div class="table-wrap"><table><thead><tr>';
+  html += '<th>N°</th><th>Expéditeur</th><th>Objet</th><th>Date arrivée</th><th>État</th><th>Position</th>';
+  html += '</tr></thead><tbody>';
+
+  for (const c of courriers) {
+    const dateStr = c.date_arrivee ? c.date_arrivee.toString().slice(0, 10) : '';
+    html += `<tr data-id="${c.id}">`;
+    html += `<td>${esc(c.numero)}</td>`;
+    html += `<td>${esc(c.expediteur)}</td>`;
+    html += `<td>${esc(c.objet)}</td>`;
+    html += `<td>${esc(dateStr)}</td>`;
+    html += `<td contenteditable="true" data-field="etat" data-id="${c.id}" onblur="onCellChange(this)">${esc(c.etat)}</td>`;
+    html += `<td contenteditable="true" data-field="position" data-id="${c.id}" onblur="onCellChange(this)">${esc(c.position)}</td>`;
+    html += '</tr>';
+  }
+
+  html += '</tbody></table></div></div>';
+  wrap.innerHTML = html;
+
+  document.getElementById('btn2Next').disabled = true;
+  document.getElementById('btnSave').disabled = false;
+  document.getElementById('saveStatus').textContent = '';
+  document.getElementById('saveStatus').className = 'save-status';
+
+  goToStep(2);
+}
+
+function esc(s) {
+  const el = document.createElement('div');
+  el.textContent = s || '';
+  return el.innerHTML;
+}
+
+function onCellChange(el) {
+  const id = parseInt(el.dataset.id, 10);
+  modifiedIds.add(id);
+  el.classList.add('modified');
+  updateSaveStatus();
+}
+
+function updateSaveStatus() {
+  const status = document.getElementById('saveStatus');
+  const count = modifiedIds.size;
+  if (count === 0) {
+    status.textContent = '';
+    status.className = 'save-status';
+  } else {
+    status.textContent = '⚠️ ' + count + ' modification(s) non enregistrée(s)';
+    status.className = 'save-status unsaved';
+  }
+}
+
+async function saveChanges() {
+  const sp = document.getElementById('spinner2');
+  const btn = document.getElementById('btnSave');
+  const alert2 = document.getElementById('alert2');
+  const alert2ok = document.getElementById('alert2-ok');
+  const alert2msg = document.getElementById('alert2-msg');
+  const alert2okmsg = document.getElementById('alert2-ok-msg');
+
+  alert2.classList.remove('show');
+  alert2ok.classList.remove('show');
+  sp.classList.add('show');
+  btn.disabled = true;
+
+  const ids = Array.from(modifiedIds);
+  let success = 0;
+  let errors = [];
+
+  for (const id of ids) {
+    const tr = document.querySelector(`tr[data-id="${id}"]`);
+    if (!tr) continue;
+    const etatEl = tr.querySelector('td[data-field="etat"]');
+    const posEl = tr.querySelector('td[data-field="position"]');
+    const payload = {};
+    if (etatEl) payload.etat = etatEl.textContent.trim();
+    if (posEl) payload.position = posEl.textContent.trim();
+
+    try {
+      const res = await fetch('/api/courriers/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        success++;
+        const cell = tr.querySelector('td.modified');
+        if (cell) cell.classList.remove('modified');
+      } else {
+        errors.push(id);
+      }
+    } catch(e) {
+      errors.push(id);
+    }
+  }
+
+  for (const id of ids) {
+    const tr = document.querySelector(`tr[data-id="${id}"]`);
+    if (tr) {
+      const cells = tr.querySelectorAll('td.modified');
+      cells.forEach(c => c.classList.remove('modified'));
+    }
+  }
+
+  modifiedIds = new Set();
+  updateSaveStatus();
+
+  if (errors.length === 0) {
+    alert2okmsg.textContent = success + ' modification(s) enregistrée(s) avec succès.';
+    alert2ok.classList.add('show');
+    document.getElementById('btn2Next').disabled = false;
+  } else {
+    alert2msg.textContent = success + ' enregistrée(s), ' + errors.length + ' erreur(s).';
+    alert2.classList.add('show');
+  }
+
+  sp.classList.remove('show');
+  btn.disabled = false;
+}
+
 function selectMode(mode) {
   currentMode = mode;
   ['all', 'assigne_non_traite', 'en_retard'].forEach(m => {
@@ -648,15 +819,12 @@ function updateDatePreview() {
 document.getElementById('dateDebut').addEventListener('change', updateDatePreview);
 document.getElementById('dateFin').addEventListener('change', updateDatePreview);
 
-// Init
 updateDateUI();
 setDefaultDates();
 
-// ── Summary ───────────────────────────────────────────────────────────────
 function updateSummary() {
   const labels = { all: 'Situation journalière complète', assigne_non_traite: 'Assignés non traités', en_retard: 'En retard de traitement' };
   document.getElementById('sum-mode').textContent = labels[currentMode];
-  document.getElementById('sum-lines').textContent = totalLines + ' courrier(s)';
   const debut = document.getElementById('dateDebut').value;
   const fin = document.getElementById('dateFin').value;
   const mois = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
@@ -668,56 +836,10 @@ function updateSummary() {
     const d1 = new Date(debut + 'T00:00:00'), d2 = new Date(fin + 'T00:00:00');
     if (!isNaN(d1) && !isNaN(d2)) datesLabel = d1.getDate() + ' ' + mois[d1.getMonth()] + ' → ' + d2.getDate() + ' ' + mois[d2.getMonth()] + ' ' + d2.getFullYear();
   }
+  document.getElementById('sum-lines').textContent = courriers.length + ' courrier(s)';
   document.getElementById('sum-dates').textContent = datesLabel;
 }
 
-// ── Générer ───────────────────────────────────────────────────────────────
-async function generateFile() {
-  const sp = document.getElementById('spinner3');
-  const btn = document.getElementById('btnGenerate');
-  const alert3 = document.getElementById('alert3');
-  const alert3ok = document.getElementById('alert3-ok');
-  alert3.classList.remove('show'); alert3ok.classList.remove('show');
-  sp.classList.add('show'); btn.disabled = true;
-
-  try {
-    const res = await fetch('/api/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        csvText,
-        mode: currentMode,
-        dateDebut: document.getElementById('dateDebut').value,
-        dateFin: document.getElementById('dateFin').value
-      })
-    });
-
-    if (!res.ok) {
-      const data = await res.json();
-      document.getElementById('alert3-msg').textContent = data.error || 'Erreur inconnue';
-      alert3.classList.add('show');
-    } else {
-      generatedFileName = decodeURIComponent(res.headers.get('X-File-Name') || 'rapport.xls');
-      const count = res.headers.get('X-Count') || '?';
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = generatedFileName;
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 2000);
-
-      document.getElementById('alert3-ok-msg').textContent = `Fichier généré avec ${count} courrier(s) — téléchargement démarré.`;
-      alert3ok.classList.add('show');
-      document.getElementById('btnToMail').style.display = 'inline-flex';
-    }
-  } catch(e) {
-    document.getElementById('alert3-msg').textContent = 'Erreur réseau : ' + e.message;
-    alert3.classList.add('show');
-  }
-  sp.classList.remove('show'); btn.disabled = false;
-}
-
-// ── Mail ──────────────────────────────────────────────────────────────────
 function updateMailSubjectPreview() {
   const debut = document.getElementById('dateDebut').value;
   const fin = document.getElementById('dateFin').value;
@@ -739,6 +861,50 @@ function updateMailSubjectPreview() {
   document.getElementById('mailSubjectPreview').textContent = (titles[currentMode] || '') + (label ? ' — ' + label : '');
 }
 
+async function generateFile() {
+  const sp = document.getElementById('spinner3');
+  const btn = document.getElementById('btnGenerate');
+  const alert3 = document.getElementById('alert3');
+  const alert3ok = document.getElementById('alert3-ok');
+  alert3.classList.remove('show'); alert3ok.classList.remove('show');
+  sp.classList.add('show'); btn.disabled = true;
+
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mode: currentMode,
+        dateDebut: document.getElementById('dateDebut').value,
+        dateFin: document.getElementById('dateFin').value
+      })
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      document.getElementById('alert3-msg').textContent = data.error || 'Erreur inconnue';
+      alert3.classList.add('show');
+    } else {
+      generatedFileName = decodeURIComponent(res.headers.get('X-File-Name') || 'rapport.xls');
+      const count = res.headers.get('X-Count') || '?';
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = generatedFileName;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+
+      document.getElementById('alert3-ok-msg').textContent = 'Fichier généré avec ' + count + ' courrier(s) — téléchargement démarré.';
+      alert3ok.classList.add('show');
+      document.getElementById('btnToMail').style.display = 'inline-flex';
+    }
+  } catch(e) {
+    document.getElementById('alert3-msg').textContent = 'Erreur réseau : ' + e.message;
+    alert3.classList.add('show');
+  }
+  sp.classList.remove('show'); btn.disabled = false;
+}
+
 async function sendMail() {
   const sp = document.getElementById('spinner4');
   const btn = document.getElementById('btnSendMail');
@@ -752,7 +918,6 @@ async function sendMail() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        csvText,
         mode: currentMode,
         dateDebut: document.getElementById('dateDebut').value,
         dateFin: document.getElementById('dateFin').value,
@@ -776,15 +941,23 @@ async function sendMail() {
 }
 
 function resetAll() {
-  csvText = ''; totalLines = 0; currentMode = 'all'; generatedFileName = '';
+  courriers = [];
+  totalLines = 0;
+  currentMode = 'all';
+  generatedFileName = '';
+  modifiedIds = new Set();
+
   document.getElementById('uploadSuccess').style.display = 'none';
   document.getElementById('fileInput').value = '';
   document.getElementById('btn1Next').disabled = true;
   document.getElementById('btnToMail').style.display = 'none';
   document.getElementById('mailSuccess').style.display = 'none';
   document.getElementById('btnSendMail').style.display = 'inline-flex';
+  document.getElementById('editableTableWrap').innerHTML = '';
+  document.getElementById('btn2Next').disabled = true;
+  document.getElementById('saveStatus').textContent = '';
+  document.getElementById('saveStatus').className = 'save-status';
   document.querySelectorAll('.alert').forEach(a => a.classList.remove('show'));
-  // Reset stepper
   for (let i = 1; i <= 4; i++) {
     const ind = document.getElementById('step' + i + '-indicator');
     ind.classList.remove('active', 'done');
@@ -793,6 +966,10 @@ function resetAll() {
 }
 
 document.getElementById('btn1Next').addEventListener('click', () => goToStep(2));
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/service-worker.js');
+}
 </script>
 </body>
 </html>

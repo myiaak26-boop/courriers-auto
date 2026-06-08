@@ -1,6 +1,7 @@
 # Courriers Auto — Primature
 
 Générateur automatique de situations courriers pour le Secrétariat Central de la Primature.
+Avec stockage PostgreSQL et édition inline des données.
 
 ## Structure du projet
 
@@ -8,35 +9,46 @@ Générateur automatique de situations courriers pour le Secrétariat Central de
 courriers-auto/
 ├── server.js          # Serveur Express (API)
 ├── logic.js           # Logique métier (parsing, filtrage, génération XLS)
+├── db.js              # Connexion PostgreSQL + auto-création table
+├── schema.sql         # Schéma de référence
 ├── package.json
 ├── .gitignore
 └── public/
-    └── index.html     # Interface web (4 étapes)
+    └── index.html     # Interface web (4 étapes avec tableau éditable)
 ```
 
-## Variables d'environnement (obligatoires sur Render)
+## Fonctionnement
 
-| Variable           | Valeur                                      |
-|--------------------|---------------------------------------------|
-| `SENDGRID_API_KEY` | (clé API SendGrid)                          |
-| `MAIL_FROM`        | amadoukeita5263@gmail.com                   |
-| `MAIL_TO`          | aboubacar.bangoura@primature.gov.gn         |
+1. **Upload** du fichier Excel (.xlsx) ou CSV
+2. **Stockage** automatique dans PostgreSQL (l'ancienne session est effacée)
+3. **Édition inline** des champs État et Position
+4. **Génération** du rapport XLS (Situation journalière / Assignés non traités / En retard)
+5. **Envoi** par email via SendGrid (optionnel)
+
+## Variables d'environnement
+
+| Variable           | Description                          |
+|--------------------|--------------------------------------|
+| `PGHOST`           | Hôte PostgreSQL                      |
+| `PGPORT`           | Port PostgreSQL (défaut: 5432)       |
+| `PGUSER`           | Utilisateur PostgreSQL               |
+| `PGPASSWORD`       | Mot de passe PostgreSQL              |
+| `PGDATABASE`       | Nom de la base de données            |
+| `PGSSLMODE`        | Mode SSL (`require` sur Render.com)  |
+| `SENDGRID_API_KEY` | Clé API SendGrid (optionnel)         |
+| `MAIL_FROM`        | Expéditeur des emails               |
+| `MAIL_TO`          | Destinataire par défaut              |
+| `PORT`             | Port du serveur (Render définit auto)|
 
 ## Déploiement sur Render.com
 
 1. Créer un compte sur https://render.com
-2. Créer un dépôt GitHub avec ce code
-3. Sur Render : New → Web Service → connecter le dépôt
-4. Paramètres :
+2. Créer une base PostgreSQL : **New → PostgreSQL**
+3. Créer un Web Service : **New → Web Service** → connecter le dépôt GitHub
+4. Paramètres du Web Service :
    - **Build Command** : `npm install`
    - **Start Command** : `npm start`
-5. Ajouter les variables d'environnement dans l'onglet "Environment"
-6. Cliquer sur "Deploy"
+5. Ajouter les variables d'environnement depuis l'onglet "Environment" (voir ci-dessus)
+6. Cliquer sur **"Deploy"**
 
-## Utilisation
-
-1. Ouvrir l'URL du site depuis n'importe quel appareil
-2. Importer le fichier Excel exporté depuis GEC
-3. Choisir le type de rapport
-4. Générer et télécharger
-5. Envoyer par mail (optionnel)
+La table `courriers` sera créée automatiquement au premier démarrage.
