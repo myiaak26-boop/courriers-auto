@@ -27,6 +27,7 @@ async function initDB() {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    await client.query('ALTER TABLE courriers ADD COLUMN IF NOT EXISTS niveau_urgence VARCHAR(50) DEFAULT \'\'');
     console.log('Table "courriers" prête');
   } finally {
     client.release();
