@@ -37,7 +37,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message || 'Erreur interne' });
 });
 
-app.post('/api/upload', upload.single('file'), async (req, res) => {
+app.post('/api/upload', upload.single('file'), (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Aucun fichier reçu.' });
 
@@ -53,18 +53,46 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
     }
 
     const rows = processCSV(csvText);
-    console.log(`Upload: ${rows.length} lignes parsées`);
+
+    res.json({
+      success: true,
+      count: rows.length,
+      csvText,
+      preview: rows.slice(0, 5).map(r => ({
+        numero: r.numero,
+        expediteur: r.expediteur,
+        objet: r.objet,
+        etat: r.etat,
+        dateArrivee: r.dateArrivee
+      }))
+    });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.post('/api/store', async (req, res) => {
+  try {
+    const { csvText, mode, dateDebut, dateFin } = req.body;
+    if (!csvText) return res.status(400).json({ error: 'Données manquantes.' });
+
+    const allRows = processCSV(csvText);
+    const { getFilteredRows } = require('./logic');
+    const filteredRows = getFilteredRows(allRows, mode || 'all', dateDebut || '', dateFin || '');
+
+    if (!filteredRows.length) {
+      return res.status(400).json({ error: 'Aucun courrier trouvé pour les critères sélectionnés.' });
+    }
 
     const client = await pool.connect();
-    console.log('Upload: connecté à la DB');
     try {
       await client.query('DELETE FROM courriers');
-      for (const r of rows) {
+      for (const r of filteredRows) {
         const dateArrivee = toISODate(r.dateArrivee);
         await client.query(
-          `INSERT INTO courriers (numero, expediteur, objet, date_arrivee, etat, position)
-           VALUES ($1, $2, $3, $4, $5, $6)`,
-          [r.numero, r.expediteur, r.objet, dateArrivee, r.etat, r.position]
+          `INSERT INTO courriers (numero, expediteur, objet, date_arrivee, niveau_urgence, etat, position)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          [r.numero, r.expediteur, r.objet, dateArrivee, r.niveauUrgence || '', r.etat, r.position]
         );
       }
     } finally {
@@ -72,20 +100,13 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
     }
 
     const { rows: dbRows } = await pool.query(
-      'SELECT id, numero, expediteur, objet, date_arrivee, etat, position FROM courriers ORDER BY id'
+      'SELECT id, numero, expediteur, objet, date_arrivee, niveau_urgence, etat, position FROM courriers ORDER BY id'
     );
 
     res.json({
       success: true,
       count: dbRows.length,
-      rows: dbRows,
-      preview: dbRows.slice(0, 5).map(r => ({
-        numero: r.numero,
-        expediteur: r.expediteur,
-        objet: r.objet,
-        etat: r.etat,
-        dateArrivee: r.date_arrivee
-      }))
+      rows: dbRows
     });
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -104,11 +125,11 @@ app.get('/api/courriers', async (req, res) => {
 app.put('/api/courriers/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { etat, position } = req.body;
+    const { etat, position, niveau_urgence } = req.body;
     const { rows } = await pool.query(
-      `UPDATE courriers SET etat = COALESCE($1, etat), position = COALESCE($2, position), updated_at = CURRENT_TIMESTAMP
-       WHERE id = $3 RETURNING *`,
-      [etat ?? null, position ?? null, id]
+      `UPDATE courriers SET etat = COALESCE($1, etat), position = COALESCE($2, position), niveau_urgence = COALESCE($3, niveau_urgence), updated_at = CURRENT_TIMESTAMP
+       WHERE id = $4 RETURNING *`,
+      [etat ?? null, position ?? null, niveau_urgence ?? null, id]
     );
     if (!rows.length) return res.status(404).json({ error: 'Courrier introuvable.' });
     res.json({ success: true, row: rows[0] });
@@ -128,6 +149,7 @@ app.post('/api/generate', async (req, res) => {
       expediteur: r.expediteur,
       objet: r.objet,
       dateArrivee: r.date_arrivee ? dateToString(r.date_arrivee) : '',
+      niveauUrgence: r.niveau_urgence || '',
       etat: r.etat,
       position: r.position,
       positionSource: r.position
@@ -164,6 +186,7 @@ app.post('/api/send-mail', async (req, res) => {
       expediteur: r.expediteur,
       objet: r.objet,
       dateArrivee: r.date_arrivee ? dateToString(r.date_arrivee) : '',
+      niveauUrgence: r.niveau_urgence || '',
       etat: r.etat,
       position: r.position,
       positionSource: r.position

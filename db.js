@@ -19,6 +19,7 @@ async function initDB() {
         expediteur VARCHAR(255) NOT NULL DEFAULT '',
         objet TEXT NOT NULL DEFAULT '',
         date_arrivee DATE,
+        niveau_urgence VARCHAR(50) DEFAULT '',
         etat VARCHAR(50) DEFAULT 'Non assigné',
         position VARCHAR(255) DEFAULT '',
         jours_retard INTEGER DEFAULT 0,

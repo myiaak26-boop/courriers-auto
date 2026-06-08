@@ -62,8 +62,6 @@ header h1 {
   color: white;
   letter-spacing: 0.03em;
 }
-header p { font-size: 12px; color: rgba(255,255,255,0.6); }
-
 main { max-width: 960px; margin: 0 auto; padding: 32px 20px 60px; }
 
 .stepper {
@@ -163,7 +161,6 @@ main { max-width: 960px; margin: 0 auto; padding: 32px 20px 60px; }
 .badge-green { background: #d1fae5; color: #065f46; }
 .badge-blue  { background: #dbeafe; color: #1e40af; }
 .badge-gold  { background: #fef3c7; color: #92400e; }
-.badge-red   { background: #fee2e2; color: #991b1b; }
 
 .mode-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 20px; }
 .mode-card {
@@ -176,6 +173,7 @@ main { max-width: 960px; margin: 0 auto; padding: 32px 20px 60px; }
 }
 .mode-card:hover { border-color: var(--accent); background: #fffbf0; }
 .mode-card.selected { border-color: var(--blue); background: #f0f5ff; }
+.mode-card.disabled { opacity: 0.5; cursor: not-allowed; }
 .mode-icon { font-size: 28px; flex-shrink: 0; }
 .mode-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 3px; }
 .mode-desc { font-size: 13px; color: var(--muted); }
@@ -196,6 +194,7 @@ input[type="radio"] { display: none; }
   transition: border-color 0.2s;
 }
 .date-field input:focus { border-color: var(--blue); }
+.date-field input:disabled { background: #f0f0f0; cursor: not-allowed; }
 
 .btn {
   border: none;
@@ -247,7 +246,6 @@ input[type="radio"] { display: none; }
 .alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
 .alert-success { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
 .alert-info { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
-.alert-warning { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
 
 .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); margin-top: 16px; }
 table { width: 100%; border-collapse: collapse; font-size: 12px; }
@@ -266,25 +264,18 @@ th {
 td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
 tr:last-child td { border-bottom: none; }
 tr:nth-child(even) td { background: #f8faff; }
-
 td[contenteditable="true"] {
   cursor: text;
   border-radius: 4px;
   transition: background 0.15s;
 }
-td[contenteditable="true"]:hover {
-  background: #fff8e0;
-}
+td[contenteditable="true"]:hover { background: #fff8e0; }
 td[contenteditable="true"]:focus {
   background: #fff3c4;
   outline: 2px solid var(--accent);
   outline-offset: -2px;
 }
-td.modified {
-  background: #fef3c7 !important;
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
-}
+td.modified { background: #fef3c7 !important; outline: 2px solid var(--accent); outline-offset: -2px; }
 
 .stats-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
 .stat-card {
@@ -341,21 +332,10 @@ td.modified {
   border-radius: 8px;
   margin-top: 12px;
 }
-.save-status.saved {
-  background: #d1fae5;
-  color: #065f46;
-}
-.save-status.unsaved {
-  background: #fef3c7;
-  color: #92400e;
-}
+.save-status.saved { background: #d1fae5; color: #065f46; }
+.save-status.unsaved { background: #fef3c7; color: #92400e; }
 
-.table-container {
-  max-height: 500px;
-  overflow-y: auto;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-}
+.table-container { max-height: 500px; overflow-y: auto; border-radius: 12px; border: 1px solid var(--border); }
 </style>
 </head>
 <body>
@@ -376,23 +356,28 @@ td.modified {
     </div>
     <div class="step" id="step2-indicator">
       <div class="step-num">2</div>
-      <div class="step-label">Modifier<br>les données</div>
+      <div class="step-label">Choisir<br>le rapport</div>
     </div>
     <div class="step" id="step3-indicator">
       <div class="step-num">3</div>
-      <div class="step-label">Générer<br>&amp; télécharger</div>
+      <div class="step-label">Modifier<br>les données</div>
     </div>
     <div class="step" id="step4-indicator">
       <div class="step-num">4</div>
+      <div class="step-label">Générer<br>&amp; télécharger</div>
+    </div>
+    <div class="step" id="step5-indicator">
+      <div class="step-num">5</div>
       <div class="step-label">Envoyer<br>par mail</div>
     </div>
   </div>
 
+  <!-- ÉTAPE 1 : Upload -->
   <div class="card active" id="card1">
     <div class="card-title">Étape 1 — Importer le fichier</div>
     <div class="card-subtitle">Importez le fichier Excel (.xlsx) ou CSV exporté depuis le site GEC.</div>
 
-    <div id="alert1" class="alert alert-error">⚠️ <span id="alert1-msg"></span></div>
+    <div id="alert1" class="alert alert-error"> <span id="alert1-msg"></span></div>
 
     <div class="drop-zone" id="dropZone">
       <div class="drop-icon">📊</div>
@@ -407,6 +392,7 @@ td.modified {
         <span class="badge badge-blue" id="fileName"></span>
         <span class="badge badge-gold" id="lineCount"></span>
       </div>
+      <div id="previewTable"></div>
     </div>
 
     <div class="btn-row">
@@ -417,37 +403,14 @@ td.modified {
     </div>
   </div>
 
+  <!-- ÉTAPE 2 : Choisir le rapport -->
   <div class="card" id="card2">
-    <div class="card-title">Étape 2 — Modifier les données</div>
+    <div class="card-title">Étape 2 — Choisir le rapport</div>
     <div class="card-subtitle">
-      Modifiez les champs <strong>État</strong> et <strong>Position</strong> directement dans le tableau, puis enregistrez.
-      Les colonnes N°, Expéditeur, Objet et Date sont en lecture seule.
+      Choisissez le type de situation à générer, puis stockez les données filtrées en base pour modification.
     </div>
 
-    <div id="alert2" class="alert alert-error">⚠️ <span id="alert2-msg"></span></div>
-    <div id="alert2-ok" class="alert alert-success"> <span id="alert2-ok-msg"></span></div>
-
-    <div id="editableTableWrap"></div>
-
-    <div class="btn-row">
-      <button class="btn btn-success" id="btnSave" onclick="saveChanges()">
-        <span id="spinner2" class="spinner"></span>
-        Enregistrer les modifications
-      </button>
-      <span id="saveStatus" class="save-status"></span>
-    </div>
-
-    <div class="btn-row" style="margin-top:12px">
-      <button class="btn btn-outline" onclick="goToStep(1)">← Retour</button>
-      <button class="btn btn-primary" id="btn2Next" onclick="goToStep(3)" disabled>
-        Continuer →
-      </button>
-    </div>
-  </div>
-
-  <div class="card" id="card3">
-    <div class="card-title">Étape 3 — Choisir le rapport</div>
-    <div class="card-subtitle">Choisissez le type de situation à générer, puis définissez la période.</div>
+    <div id="alert2" class="alert alert-error"> <span id="alert2-msg"></span></div>
 
     <div class="mode-grid">
       <div class="mode-card selected" id="mode-all" onclick="selectMode('all')">
@@ -462,7 +425,7 @@ td.modified {
         <div class="mode-icon">⏳</div>
         <div>
           <div class="mode-title">Courriers assignés non traités</div>
-          <div class="mode-desc">Courriers assignés mais non traités sur une période (7 derniers jours par défaut)</div>
+          <div class="mode-desc">Courriers assignés mais non traités sur une période</div>
         </div>
         <input type="radio" name="mode" value="assigne_non_traite">
       </div>
@@ -470,7 +433,7 @@ td.modified {
         <div class="mode-icon">🚨</div>
         <div>
           <div class="mode-title">Courriers en retard de traitement</div>
-          <div class="mode-desc">Courriers assignés depuis plus de 5 jours non traités (depuis le 1er janvier par défaut)</div>
+          <div class="mode-desc">Courriers assignés depuis plus de 5 jours non traités</div>
         </div>
         <input type="radio" name="mode" value="en_retard">
       </div>
@@ -488,6 +451,47 @@ td.modified {
     </div>
     <div id="datePreview" style="font-size:13px;color:var(--muted);margin-bottom:16px;font-style:italic"></div>
 
+    <div class="btn-row">
+      <button class="btn btn-outline" onclick="goToStep(1)">← Retour</button>
+      <button class="btn btn-primary" id="btnStore" onclick="storeData()">
+        <span id="spinner2" class="spinner"></span>
+        Stocker &amp; Modifier →
+      </button>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 3 : Modifier -->
+  <div class="card" id="card3">
+    <div class="card-title">Étape 3 — Modifier les données</div>
+    <div class="card-subtitle">
+      Modifiez les champs <strong>Urgence</strong>, <strong>État</strong> et <strong>Position</strong> directement dans le tableau, puis enregistrez.
+    </div>
+
+    <div id="alert3" class="alert alert-error"> <span id="alert3-msg"></span></div>
+    <div id="alert3-ok" class="alert alert-success"> <span id="alert3-ok-msg"></span></div>
+
+    <div id="editableTableWrap"></div>
+
+    <div class="btn-row">
+      <button class="btn btn-success" id="btnSave" onclick="saveChanges()">
+        <span id="spinner3" class="spinner"></span>
+        Enregistrer les modifications
+      </button>
+      <span id="saveStatus" class="save-status"></span>
+    </div>
+
+    <div class="btn-row" style="margin-top:12px">
+      <button class="btn btn-primary" id="btn3Next" onclick="goToStep(4)" disabled>
+        Continuer →
+      </button>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 4 : Générer -->
+  <div class="card" id="card4">
+    <div class="card-title">Étape 4 — Générer &amp; télécharger</div>
+    <div class="card-subtitle">Le fichier Excel sera généré selon vos critères et téléchargé automatiquement.</div>
+
     <div id="summaryBox" style="background:var(--bg);border-radius:14px;padding:18px;margin-bottom:20px">
       <div style="font-weight:600;font-size:14px;color:var(--navy);margin-bottom:10px">Récapitulatif</div>
       <div style="display:flex;flex-direction:column;gap:6px;font-size:14px">
@@ -497,27 +501,28 @@ td.modified {
       </div>
     </div>
 
-    <div id="alert3" class="alert alert-error">⚠️ <span id="alert3-msg"></span></div>
-    <div id="alert3-ok" class="alert alert-success"> <span id="alert3-ok-msg"></span></div>
+    <div id="alert4" class="alert alert-error"> <span id="alert4-msg"></span></div>
+    <div id="alert4-ok" class="alert alert-success"> <span id="alert4-ok-msg"></span></div>
 
     <div class="btn-row">
-      <button class="btn btn-outline" onclick="goToStep(2)">← Retour</button>
+      <button class="btn btn-outline" onclick="goToStep(3)">← Retour</button>
       <button class="btn btn-primary" id="btnGenerate" onclick="generateFile()">
-        <span id="spinner3" class="spinner"></span>
+        <span id="spinner4" class="spinner"></span>
         ⚡ Générer &amp; Télécharger
       </button>
-      <button class="btn btn-success" id="btnToMail" onclick="goToStep(4)" style="display:none">
+      <button class="btn btn-success" id="btnToMail" onclick="goToStep(5)" style="display:none">
         Envoyer par mail →
       </button>
     </div>
   </div>
 
-  <div class="card" id="card4">
-    <div class="card-title">📧 Étape 4 — Envoyer par mail</div>
+  <!-- ÉTAPE 5 : Mail -->
+  <div class="card" id="card5">
+    <div class="card-title">📧 Étape 5 — Envoyer par mail</div>
     <div class="card-subtitle">Le rapport généré sera envoyé en pièce jointe à l'adresse indiquée.</div>
 
-    <div id="alert4" class="alert alert-error">⚠️ <span id="alert4-msg"></span></div>
-    <div id="alert4-ok" class="alert alert-success"> <span id="alert4-ok-msg"></span></div>
+    <div id="alert5" class="alert alert-error"> <span id="alert5-msg"></span></div>
+    <div id="alert5-ok" class="alert alert-success"> <span id="alert5-ok-msg"></span></div>
 
     <div class="mail-input-wrap">
       <label>Adresse e-mail du destinataire</label>
@@ -530,9 +535,9 @@ td.modified {
     </div>
 
     <div class="btn-row">
-      <button class="btn btn-outline" onclick="goToStep(3)">← Retour</button>
+      <button class="btn btn-outline" onclick="goToStep(4)">← Retour</button>
       <button class="btn btn-mail" id="btnSendMail" onclick="sendMail()">
-        <span id="spinner4" class="spinner"></span>
+        <span id="spinner5" class="spinner"></span>
         📧 Envoyer le mail
       </button>
     </div>
@@ -547,14 +552,16 @@ td.modified {
 </main>
 
 <script>
+let csvText = '';
 let courriers = [];
 let totalLines = 0;
 let currentMode = 'all';
 let generatedFileName = '';
 let modifiedIds = new Set();
+let dataStored = false;
 
 function goToStep(n) {
-  for (let i = 1; i <= 4; i++) {
+  for (let i = 1; i <= 5; i++) {
     document.getElementById('card' + i).classList.remove('active');
     const ind = document.getElementById('step' + i + '-indicator');
     ind.classList.remove('active');
@@ -564,11 +571,11 @@ function goToStep(n) {
   for (let i = 1; i < n; i++) {
     document.getElementById('step' + i + '-indicator').classList.add('done');
   }
-  if (n === 3) {
+  if (n === 4) {
     updateSummary();
     updateMailSubjectPreview();
   }
-  if (n === 4) updateMailSubjectPreview();
+  if (n === 5) updateMailSubjectPreview();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -608,15 +615,28 @@ async function handleUpload(file) {
       return;
     }
 
-    courriers = data.rows;
+    csvText = data.csvText;
     totalLines = data.count;
-    modifiedIds = new Set();
+    dataStored = false;
 
-    document.getElementById('fileName').textContent = '📄 ' + file.name;
+    document.getElementById('fileName').textContent = file.name;
     document.getElementById('lineCount').textContent = totalLines + ' courrier(s)';
-    document.getElementById('uploadSuccess').style.display = 'block';
 
-    renderEditableTable();
+    const cols = data.preview.length ? Object.keys(data.preview[0]) : [];
+    let html = '<div class="table-wrap"><table><thead><tr>';
+    cols.forEach(c => html += '<th>' + c + '</th>');
+    html += '</tr></thead><tbody>';
+    data.preview.forEach(row => {
+      html += '<tr>';
+      cols.forEach(c => html += '<td>' + (row[c] || '') + '</td>');
+      html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+    if (data.preview.length < totalLines) {
+      html += '<p style="font-size:12px;color:var(--muted);margin-top:8px;text-align:center">… et ' + (totalLines - data.preview.length) + ' autre(s) ligne(s)</p>';
+    }
+    document.getElementById('previewTable').innerHTML = html;
+    document.getElementById('uploadSuccess').style.display = 'block';
     btn.disabled = false;
 
     setDefaultDates();
@@ -628,135 +648,10 @@ async function handleUpload(file) {
   sp.classList.remove('show');
 }
 
-function renderEditableTable() {
-  const wrap = document.getElementById('editableTableWrap');
-  if (!courriers.length) {
-    wrap.innerHTML = '<p style="color:var(--muted)">Aucune donnée.</p>';
-    return;
-  }
-
-  let html = '<div class="table-container"><div class="table-wrap"><table><thead><tr>';
-  html += '<th>N°</th><th>Expéditeur</th><th>Objet</th><th>Date arrivée</th><th>État</th><th>Position</th>';
-  html += '</tr></thead><tbody>';
-
-  for (const c of courriers) {
-    const dateStr = c.date_arrivee ? c.date_arrivee.toString().slice(0, 10) : '';
-    html += `<tr data-id="${c.id}">`;
-    html += `<td>${esc(c.numero)}</td>`;
-    html += `<td>${esc(c.expediteur)}</td>`;
-    html += `<td>${esc(c.objet)}</td>`;
-    html += `<td>${esc(dateStr)}</td>`;
-    html += `<td contenteditable="true" data-field="etat" data-id="${c.id}" onblur="onCellChange(this)">${esc(c.etat)}</td>`;
-    html += `<td contenteditable="true" data-field="position" data-id="${c.id}" onblur="onCellChange(this)">${esc(c.position)}</td>`;
-    html += '</tr>';
-  }
-
-  html += '</tbody></table></div></div>';
-  wrap.innerHTML = html;
-
-  document.getElementById('btn2Next').disabled = true;
-  document.getElementById('btnSave').disabled = false;
-  document.getElementById('saveStatus').textContent = '';
-  document.getElementById('saveStatus').className = 'save-status';
-
-  goToStep(2);
-}
-
-function esc(s) {
-  const el = document.createElement('div');
-  el.textContent = s || '';
-  return el.innerHTML;
-}
-
-function onCellChange(el) {
-  const id = parseInt(el.dataset.id, 10);
-  modifiedIds.add(id);
-  el.classList.add('modified');
-  updateSaveStatus();
-}
-
-function updateSaveStatus() {
-  const status = document.getElementById('saveStatus');
-  const count = modifiedIds.size;
-  if (count === 0) {
-    status.textContent = '';
-    status.className = 'save-status';
-  } else {
-    status.textContent = '⚠️ ' + count + ' modification(s) non enregistrée(s)';
-    status.className = 'save-status unsaved';
-  }
-}
-
-async function saveChanges() {
-  const sp = document.getElementById('spinner2');
-  const btn = document.getElementById('btnSave');
-  const alert2 = document.getElementById('alert2');
-  const alert2ok = document.getElementById('alert2-ok');
-  const alert2msg = document.getElementById('alert2-msg');
-  const alert2okmsg = document.getElementById('alert2-ok-msg');
-
-  alert2.classList.remove('show');
-  alert2ok.classList.remove('show');
-  sp.classList.add('show');
-  btn.disabled = true;
-
-  const ids = Array.from(modifiedIds);
-  let success = 0;
-  let errors = [];
-
-  for (const id of ids) {
-    const tr = document.querySelector(`tr[data-id="${id}"]`);
-    if (!tr) continue;
-    const etatEl = tr.querySelector('td[data-field="etat"]');
-    const posEl = tr.querySelector('td[data-field="position"]');
-    const payload = {};
-    if (etatEl) payload.etat = etatEl.textContent.trim();
-    if (posEl) payload.position = posEl.textContent.trim();
-
-    try {
-      const res = await fetch('/api/courriers/' + id, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        success++;
-        const cell = tr.querySelector('td.modified');
-        if (cell) cell.classList.remove('modified');
-      } else {
-        errors.push(id);
-      }
-    } catch(e) {
-      errors.push(id);
-    }
-  }
-
-  for (const id of ids) {
-    const tr = document.querySelector(`tr[data-id="${id}"]`);
-    if (tr) {
-      const cells = tr.querySelectorAll('td.modified');
-      cells.forEach(c => c.classList.remove('modified'));
-    }
-  }
-
-  modifiedIds = new Set();
-  updateSaveStatus();
-
-  if (errors.length === 0) {
-    alert2okmsg.textContent = success + ' modification(s) enregistrée(s) avec succès.';
-    alert2ok.classList.add('show');
-    document.getElementById('btn2Next').disabled = false;
-  } else {
-    alert2msg.textContent = success + ' enregistrée(s), ' + errors.length + ' erreur(s).';
-    alert2.classList.add('show');
-  }
-
-  sp.classList.remove('show');
-  btn.disabled = false;
-}
+document.getElementById('btn1Next').addEventListener('click', () => goToStep(2));
 
 function selectMode(mode) {
+  if (dataStored) return;
   currentMode = mode;
   ['all', 'assigne_non_traite', 'en_retard'].forEach(m => {
     const card = document.getElementById('mode-' + (m === 'all' ? 'all' : m === 'assigne_non_traite' ? 'assigne' : 'retard'));
@@ -791,10 +686,10 @@ function updateDateUI() {
   const label = document.getElementById('labelDebut');
   if (currentMode === 'all') {
     wrap.style.display = 'none';
-    label.textContent = '📅 Date';
+    label.textContent = 'Date';
   } else {
     wrap.style.display = 'block';
-    label.textContent = '📅 Date de début';
+    label.textContent = 'Date de début';
   }
 }
 
@@ -807,11 +702,11 @@ function updateDatePreview() {
 
   if (currentMode === 'all' && debut) {
     const d = new Date(debut + 'T00:00:00');
-    if (!isNaN(d)) el.textContent = '📌 Rapport pour le ' + jours[d.getDay()] + ' ' + d.getDate() + ' ' + mois[d.getMonth()] + ' ' + d.getFullYear();
+    if (!isNaN(d)) el.textContent = 'Rapport pour le ' + jours[d.getDay()] + ' ' + d.getDate() + ' ' + mois[d.getMonth()] + ' ' + d.getFullYear();
   } else if (debut && fin) {
     const d1 = new Date(debut + 'T00:00:00');
     const d2 = new Date(fin + 'T00:00:00');
-    if (!isNaN(d1) && !isNaN(d2)) el.textContent = '📌 Période : du ' + d1.getDate() + ' ' + mois[d1.getMonth()] + ' ' + d1.getFullYear() + ' au ' + d2.getDate() + ' ' + mois[d2.getMonth()] + ' ' + d2.getFullYear();
+    if (!isNaN(d1) && !isNaN(d2)) el.textContent = 'Période : du ' + d1.getDate() + ' ' + mois[d1.getMonth()] + ' ' + d1.getFullYear() + ' au ' + d2.getDate() + ' ' + mois[d2.getMonth()] + ' ' + d2.getFullYear();
   } else {
     el.textContent = '';
   }
@@ -822,6 +717,190 @@ document.getElementById('dateFin').addEventListener('change', updateDatePreview)
 
 updateDateUI();
 setDefaultDates();
+
+async function storeData() {
+  if (!csvText) {
+    document.getElementById('alert2-msg').textContent = 'Aucune donnée importée. Revenez à l\'étape 1.';
+    document.getElementById('alert2').classList.add('show');
+    return;
+  }
+
+  const sp = document.getElementById('spinner2');
+  const btn = document.getElementById('btnStore');
+  const alert2 = document.getElementById('alert2');
+
+  alert2.classList.remove('show');
+  sp.classList.add('show');
+  btn.disabled = true;
+
+  try {
+    const res = await fetch('/api/store', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        csvText,
+        mode: currentMode,
+        dateDebut: document.getElementById('dateDebut').value,
+        dateFin: document.getElementById('dateFin').value
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || data.error) {
+      document.getElementById('alert2-msg').textContent = data.error || 'Erreur inconnue';
+      alert2.classList.add('show');
+      sp.classList.remove('show');
+      btn.disabled = false;
+      return;
+    }
+
+    courriers = data.rows;
+    dataStored = true;
+    modifiedIds = new Set();
+
+    document.querySelectorAll('.mode-card').forEach(c => c.classList.add('disabled'));
+    document.getElementById('dateDebut').disabled = true;
+    document.getElementById('dateFin').disabled = true;
+
+    renderEditableTable();
+
+  } catch(e) {
+    document.getElementById('alert2-msg').textContent = 'Erreur réseau : ' + e.message;
+    alert2.classList.add('show');
+    sp.classList.remove('show');
+    btn.disabled = false;
+  }
+}
+
+function renderEditableTable() {
+  const wrap = document.getElementById('editableTableWrap');
+  if (!courriers.length) {
+    wrap.innerHTML = '<p style="color:var(--muted)">Aucune donnée.</p>';
+    return;
+  }
+
+  let html = '<div class="table-container"><div class="table-wrap"><table><thead><tr>';
+  html += '<th>N°</th><th>Expéditeur</th><th>Objet</th><th>Date arrivée</th><th>Urgence</th><th>État</th><th>Position</th>';
+  html += '</tr></thead><tbody>';
+
+  for (const c of courriers) {
+    const dateStr = c.date_arrivee ? c.date_arrivee.toString().slice(0, 10) : '';
+    html += '<tr data-id="' + c.id + '">';
+    html += '<td>' + esc(c.numero) + '</td>';
+    html += '<td>' + esc(c.expediteur) + '</td>';
+    html += '<td>' + esc(c.objet) + '</td>';
+    html += '<td>' + esc(dateStr) + '</td>';
+    html += '<td contenteditable="true" data-field="niveau_urgence" data-id="' + c.id + '" onblur="onCellChange(this)">' + esc(c.niveau_urgence || '') + '</td>';
+    html += '<td contenteditable="true" data-field="etat" data-id="' + c.id + '" onblur="onCellChange(this)">' + esc(c.etat) + '</td>';
+    html += '<td contenteditable="true" data-field="position" data-id="' + c.id + '" onblur="onCellChange(this)">' + esc(c.position) + '</td>';
+    html += '</tr>';
+  }
+
+  html += '</tbody></table></div></div>';
+  wrap.innerHTML = html;
+
+  document.getElementById('btn3Next').disabled = true;
+  document.getElementById('btnSave').disabled = false;
+  document.getElementById('saveStatus').textContent = '';
+  document.getElementById('saveStatus').className = 'save-status';
+
+  goToStep(3);
+}
+
+function esc(s) {
+  const el = document.createElement('div');
+  el.textContent = s || '';
+  return el.innerHTML;
+}
+
+function onCellChange(el) {
+  const id = parseInt(el.dataset.id, 10);
+  modifiedIds.add(id);
+  el.classList.add('modified');
+  updateSaveStatus();
+}
+
+function updateSaveStatus() {
+  const status = document.getElementById('saveStatus');
+  const count = modifiedIds.size;
+  if (count === 0) {
+    status.textContent = '';
+    status.className = 'save-status';
+  } else {
+    status.textContent = count + ' modification(s) non enregistrée(s)';
+    status.className = 'save-status unsaved';
+  }
+}
+
+async function saveChanges() {
+  const sp = document.getElementById('spinner3');
+  const btn = document.getElementById('btnSave');
+  const alert3 = document.getElementById('alert3');
+  const alert3ok = document.getElementById('alert3-ok');
+  const alert3msg = document.getElementById('alert3-msg');
+  const alert3okmsg = document.getElementById('alert3-ok-msg');
+
+  alert3.classList.remove('show');
+  alert3ok.classList.remove('show');
+  sp.classList.add('show');
+  btn.disabled = true;
+
+  const ids = Array.from(modifiedIds);
+  let success = 0;
+  let errors = [];
+
+  for (const id of ids) {
+    const tr = document.querySelector('tr[data-id="' + id + '"]');
+    if (!tr) continue;
+    const urgEl = tr.querySelector('td[data-field="niveau_urgence"]');
+    const etatEl = tr.querySelector('td[data-field="etat"]');
+    const posEl = tr.querySelector('td[data-field="position"]');
+    const payload = {};
+    if (urgEl) payload.niveau_urgence = urgEl.textContent.trim();
+    if (etatEl) payload.etat = etatEl.textContent.trim();
+    if (posEl) payload.position = posEl.textContent.trim();
+
+    try {
+      const res = await fetch('/api/courriers/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        success++;
+      } else {
+        errors.push(id);
+      }
+    } catch(e) {
+      errors.push(id);
+    }
+  }
+
+  for (const id of ids) {
+    const tr = document.querySelector('tr[data-id="' + id + '"]');
+    if (tr) {
+      const cells = tr.querySelectorAll('td.modified');
+      cells.forEach(c => c.classList.remove('modified'));
+    }
+  }
+
+  modifiedIds = new Set();
+  updateSaveStatus();
+
+  if (errors.length === 0) {
+    alert3okmsg.textContent = success + ' modification(s) enregistrée(s) avec succès.';
+    alert3ok.classList.add('show');
+    document.getElementById('btn3Next').disabled = false;
+  } else {
+    alert3msg.textContent = success + ' enregistrée(s), ' + errors.length + ' erreur(s).';
+    alert3.classList.add('show');
+  }
+
+  sp.classList.remove('show');
+  btn.disabled = false;
+}
 
 function updateSummary() {
   const labels = { all: 'Situation journalière complète', assigne_non_traite: 'Assignés non traités', en_retard: 'En retard de traitement' };
@@ -863,11 +942,11 @@ function updateMailSubjectPreview() {
 }
 
 async function generateFile() {
-  const sp = document.getElementById('spinner3');
+  const sp = document.getElementById('spinner4');
   const btn = document.getElementById('btnGenerate');
-  const alert3 = document.getElementById('alert3');
-  const alert3ok = document.getElementById('alert3-ok');
-  alert3.classList.remove('show'); alert3ok.classList.remove('show');
+  const alert4 = document.getElementById('alert4');
+  const alert4ok = document.getElementById('alert4-ok');
+  alert4.classList.remove('show'); alert4ok.classList.remove('show');
   sp.classList.add('show'); btn.disabled = true;
 
   try {
@@ -883,8 +962,8 @@ async function generateFile() {
 
     if (!res.ok) {
       const data = await res.json();
-      document.getElementById('alert3-msg').textContent = data.error || 'Erreur inconnue';
-      alert3.classList.add('show');
+      document.getElementById('alert4-msg').textContent = data.error || 'Erreur inconnue';
+      alert4.classList.add('show');
     } else {
       generatedFileName = decodeURIComponent(res.headers.get('X-File-Name') || 'rapport.xls');
       const count = res.headers.get('X-Count') || '?';
@@ -895,23 +974,23 @@ async function generateFile() {
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 2000);
 
-      document.getElementById('alert3-ok-msg').textContent = 'Fichier généré avec ' + count + ' courrier(s) — téléchargement démarré.';
-      alert3ok.classList.add('show');
+      document.getElementById('alert4-ok-msg').textContent = 'Fichier généré avec ' + count + ' courrier(s) — téléchargement démarré.';
+      alert4ok.classList.add('show');
       document.getElementById('btnToMail').style.display = 'inline-flex';
     }
   } catch(e) {
-    document.getElementById('alert3-msg').textContent = 'Erreur réseau : ' + e.message;
-    alert3.classList.add('show');
+    document.getElementById('alert4-msg').textContent = 'Erreur réseau : ' + e.message;
+    alert4.classList.add('show');
   }
   sp.classList.remove('show'); btn.disabled = false;
 }
 
 async function sendMail() {
-  const sp = document.getElementById('spinner4');
+  const sp = document.getElementById('spinner5');
   const btn = document.getElementById('btnSendMail');
-  const alert4 = document.getElementById('alert4');
-  const alert4ok = document.getElementById('alert4-ok');
-  alert4.classList.remove('show'); alert4ok.classList.remove('show');
+  const alert5 = document.getElementById('alert5');
+  const alert5ok = document.getElementById('alert5-ok');
+  alert5.classList.remove('show'); alert5ok.classList.remove('show');
   sp.classList.add('show'); btn.disabled = true;
 
   try {
@@ -927,26 +1006,28 @@ async function sendMail() {
     });
     const data = await res.json();
     if (!res.ok || data.error) {
-      document.getElementById('alert4-msg').textContent = data.error || 'Erreur inconnue';
-      alert4.classList.add('show');
+      document.getElementById('alert5-msg').textContent = data.error || 'Erreur inconnue';
+      alert5.classList.add('show');
     } else {
       document.getElementById('mailSuccess').style.display = 'block';
       document.getElementById('mailSuccessMsg').textContent = data.message;
       btn.style.display = 'none';
     }
   } catch(e) {
-    document.getElementById('alert4-msg').textContent = 'Erreur réseau : ' + e.message;
-    alert4.classList.add('show');
+    document.getElementById('alert5-msg').textContent = 'Erreur réseau : ' + e.message;
+    alert5.classList.add('show');
   }
   sp.classList.remove('show'); btn.disabled = false;
 }
 
 function resetAll() {
+  csvText = '';
   courriers = [];
   totalLines = 0;
   currentMode = 'all';
   generatedFileName = '';
   modifiedIds = new Set();
+  dataStored = false;
 
   document.getElementById('uploadSuccess').style.display = 'none';
   document.getElementById('fileInput').value = '';
@@ -955,18 +1036,21 @@ function resetAll() {
   document.getElementById('mailSuccess').style.display = 'none';
   document.getElementById('btnSendMail').style.display = 'inline-flex';
   document.getElementById('editableTableWrap').innerHTML = '';
-  document.getElementById('btn2Next').disabled = true;
+  document.getElementById('btn3Next').disabled = true;
   document.getElementById('saveStatus').textContent = '';
   document.getElementById('saveStatus').className = 'save-status';
+
+  document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('disabled'));
+  document.getElementById('dateDebut').disabled = false;
+  document.getElementById('dateFin').disabled = false;
+
   document.querySelectorAll('.alert').forEach(a => a.classList.remove('show'));
-  for (let i = 1; i <= 4; i++) {
+  for (let i = 1; i <= 5; i++) {
     const ind = document.getElementById('step' + i + '-indicator');
     ind.classList.remove('active', 'done');
   }
   goToStep(1);
 }
-
-document.getElementById('btn1Next').addEventListener('click', () => goToStep(2));
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/service-worker.js');

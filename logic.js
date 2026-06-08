@@ -81,6 +81,7 @@ function normalizeObjects(objects) {
     const positionRaw = cleanText(pick(o, ['Position']));
     const position = cleanPosition(positionRaw);
     const dateArrivee = pick(o, ["Date d' Arrivée", "Date d'Arrivée", "Date d Arrivee", "Date Arrivee"]);
+    const niveauUrgence = cleanText(pick(o, ['Niveau d Urgence', 'Niveau d\'Urgence', 'Niveau Urgence', 'Urgence']));
     const numero = keepLeftOfDash(numeroRaw);
     if (!(numero || expediteur || objet)) return null;
     let etat = etatSource;
@@ -89,7 +90,7 @@ function normalizeObjects(objects) {
     else if (etatNorm === 'assigne') etat = 'Assigné';
     else if (etatNorm === 'non assigne') etat = 'Non assigné';
     else etat = etat || 'Non assigné';
-    return { numero, expediteur, objet, dateArrivee, etat, position, positionSource: positionRaw };
+    return { numero, expediteur, objet, dateArrivee, niveauUrgence, etat, position, positionSource: positionRaw };
   }).filter(Boolean).sort((a, b) => (parseInt(b.numero || '0', 10) || 0) - (parseInt(a.numero || '0', 10) || 0));
 }
 
@@ -260,7 +261,7 @@ function generateXLS(rowsNorm, rawRowsNorm, mode, dateDebut, dateFin) {
 <Cell ss:StyleID="cent_${rowStyle}"><Data ss:Type="String">${xmlEscape(r.numero)}</Data></Cell>
 <Cell ss:StyleID="cell_${rowStyle}"><Data ss:Type="String">${xmlEscape(r.expediteur)}</Data></Cell>
 <Cell ss:StyleID="cell_${rowStyle}"><Data ss:Type="String">${xmlEscape(r.objet)}</Data></Cell>
-<Cell ss:StyleID="cell_${rowStyle}"><Data ss:Type="String"></Data></Cell>
+<Cell ss:StyleID="cell_${rowStyle}"><Data ss:Type="String">${xmlEscape(r.niveauUrgence || '')}</Data></Cell>
 <Cell ss:StyleID="cell_${rowStyle}"><Data ss:Type="String">${xmlEscape(r.position)}</Data></Cell>
 <Cell ss:StyleID="cent_${rowStyle}"><Data ss:Type="String">En retard</Data></Cell>
 <Cell ss:StyleID="cent_${rowStyle}"><Data ss:Type="Number">${jours}</Data></Cell>
@@ -271,7 +272,7 @@ function generateXLS(rowsNorm, rawRowsNorm, mode, dateDebut, dateFin) {
 <Cell ss:StyleID="cell_${rowStyle}"><Data ss:Type="String">${xmlEscape(r.expediteur)}</Data></Cell>
 <Cell ss:StyleID="cell_${rowStyle}"><Data ss:Type="String">Premier Ministre</Data></Cell>
 <Cell ss:StyleID="cell_${rowStyle}"><Data ss:Type="String">${xmlEscape(r.objet)}</Data></Cell>
-<Cell ss:StyleID="cell_${rowStyle}"><Data ss:Type="String"></Data></Cell>
+<Cell ss:StyleID="cell_${rowStyle}"><Data ss:Type="String">${xmlEscape(r.niveauUrgence || '')}</Data></Cell>
 <Cell ss:StyleID="cell_${rowStyle}"><Data ss:Type="String">${xmlEscape(r.position)}</Data></Cell>
 <Cell ss:StyleID="cent_${rowStyle}"><Data ss:Type="String">${xmlEscape(r.etat)}</Data></Cell>
 </Row>`;
