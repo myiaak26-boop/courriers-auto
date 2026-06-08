@@ -49,10 +49,11 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
     try {
       await client.query('DELETE FROM courriers');
       for (const r of rows) {
+        const dateArrivee = toISODate(r.dateArrivee);
         await client.query(
           `INSERT INTO courriers (numero, expediteur, objet, date_arrivee, etat, position)
            VALUES ($1, $2, $3, $4, $5, $6)`,
-          [r.numero, r.expediteur, r.objet, r.dateArrivee || null, r.etat, r.position]
+          [r.numero, r.expediteur, r.objet, dateArrivee, r.etat, r.position]
         );
       }
     } finally {
@@ -190,6 +191,13 @@ function dateToString(d) {
   if (!d) return '';
   if (typeof d === 'string') return d.slice(0, 10);
   return d.toISOString().slice(0, 10);
+}
+
+function toISODate(dateStr) {
+  if (!dateStr) return null;
+  const m = dateStr.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+  return dateStr;
 }
 
 initDB().then(() => {
