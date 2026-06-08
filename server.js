@@ -28,6 +28,15 @@ if (process.env.SENDGRID_API_KEY) {
   sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 }
 
+process.on('unhandledRejection', (err) => {
+  console.error('UNHANDLED REJECTION:', err);
+});
+
+app.use((err, req, res, next) => {
+  console.error('ERREUR EXPRESS:', err);
+  res.status(500).json({ error: err.message || 'Erreur interne' });
+});
+
 app.post('/api/upload', upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Aucun fichier reçu.' });
@@ -44,8 +53,10 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
     }
 
     const rows = processCSV(csvText);
+    console.log(`Upload: ${rows.length} lignes parsées`);
 
     const client = await pool.connect();
+    console.log('Upload: connecté à la DB');
     try {
       await client.query('DELETE FROM courriers');
       for (const r of rows) {
