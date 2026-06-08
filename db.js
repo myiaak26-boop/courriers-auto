@@ -20,6 +20,7 @@ async function initDB() {
         objet TEXT NOT NULL DEFAULT '',
         date_arrivee DATE,
         niveau_urgence VARCHAR(50) DEFAULT '',
+        destinataire VARCHAR(255) DEFAULT 'Premier Ministre',
         etat VARCHAR(50) DEFAULT 'Non assigné',
         position VARCHAR(255) DEFAULT '',
         jours_retard INTEGER DEFAULT 0,
@@ -28,6 +29,7 @@ async function initDB() {
       )
     `);
     await client.query('ALTER TABLE courriers ADD COLUMN IF NOT EXISTS niveau_urgence VARCHAR(50) DEFAULT \'\'');
+    await client.query('ALTER TABLE courriers ADD COLUMN IF NOT EXISTS destinataire VARCHAR(255) DEFAULT \'Premier Ministre\'');
     console.log('Table "courriers" prête');
   } finally {
     client.release();

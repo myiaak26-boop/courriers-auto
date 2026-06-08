@@ -778,7 +778,7 @@ function renderEditableTable() {
   }
 
   let html = '<div class="table-container"><div class="table-wrap"><table><thead><tr>';
-  html += '<th>N°</th><th>Expéditeur</th><th>Objet</th><th>Date arrivée</th><th>Urgence</th><th>État</th><th>Position</th>';
+  html += '<th>N°</th><th>Expéditeur</th><th>Destinataire</th><th>Objet</th><th>Date arrivée</th><th>Urgence</th><th>État</th><th>Position</th>';
   html += '</tr></thead><tbody>';
 
   for (const c of courriers) {
@@ -786,6 +786,7 @@ function renderEditableTable() {
     html += '<tr data-id="' + c.id + '">';
     html += '<td>' + esc(c.numero) + '</td>';
     html += '<td>' + esc(c.expediteur) + '</td>';
+    html += '<td contenteditable="true" data-field="destinataire" data-id="' + c.id + '" onblur="onCellChange(this)">' + esc(c.destinataire || 'Premier Ministre') + '</td>';
     html += '<td>' + esc(c.objet) + '</td>';
     html += '<td>' + esc(dateStr) + '</td>';
     html += '<td contenteditable="true" data-field="niveau_urgence" data-id="' + c.id + '" onblur="onCellChange(this)">' + esc(c.niveau_urgence || '') + '</td>';
@@ -850,10 +851,12 @@ async function saveChanges() {
   for (const id of ids) {
     const tr = document.querySelector('tr[data-id="' + id + '"]');
     if (!tr) continue;
+    const destEl = tr.querySelector('td[data-field="destinataire"]');
     const urgEl = tr.querySelector('td[data-field="niveau_urgence"]');
     const etatEl = tr.querySelector('td[data-field="etat"]');
     const posEl = tr.querySelector('td[data-field="position"]');
     const payload = {};
+    if (destEl) payload.destinataire = destEl.textContent.trim();
     if (urgEl) payload.niveau_urgence = urgEl.textContent.trim();
     if (etatEl) payload.etat = etatEl.textContent.trim();
     if (posEl) payload.position = posEl.textContent.trim();

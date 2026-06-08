@@ -82,6 +82,7 @@ function normalizeObjects(objects) {
     const position = cleanPosition(positionRaw);
     const dateArrivee = pick(o, ["Date d' Arrivée", "Date d'Arrivée", "Date d Arrivee", "Date Arrivee"]);
     const niveauUrgence = cleanText(pick(o, ['Niveau d Urgence', 'Niveau d\'Urgence', 'Niveau Urgence', 'Urgence']));
+    const destinataire = cleanText(pick(o, ['Destinataire'])) || 'Premier Ministre';
     const numero = keepLeftOfDash(numeroRaw);
     if (!(numero || expediteur || objet)) return null;
     let etat = etatSource;
@@ -90,7 +91,7 @@ function normalizeObjects(objects) {
     else if (etatNorm === 'assigne') etat = 'Assigné';
     else if (etatNorm === 'non assigne') etat = 'Non assigné';
     else etat = etat || 'Non assigné';
-    return { numero, expediteur, objet, dateArrivee, niveauUrgence, etat, position, positionSource: positionRaw };
+    return { numero, expediteur, objet, dateArrivee, niveauUrgence, destinataire, etat, position, positionSource: positionRaw };
   }).filter(Boolean).sort((a, b) => (parseInt(b.numero || '0', 10) || 0) - (parseInt(a.numero || '0', 10) || 0));
 }
 
@@ -270,7 +271,7 @@ function generateXLS(rowsNorm, rawRowsNorm, mode, dateDebut, dateFin) {
     return `<Row>
 <Cell ss:StyleID="cent_${rowStyle}"><Data ss:Type="String">${xmlEscape(r.numero)}</Data></Cell>
 <Cell ss:StyleID="cell_${rowStyle}"><Data ss:Type="String">${xmlEscape(r.expediteur)}</Data></Cell>
-<Cell ss:StyleID="cell_${rowStyle}"><Data ss:Type="String">Premier Ministre</Data></Cell>
+<Cell ss:StyleID="cell_${rowStyle}"><Data ss:Type="String">${xmlEscape(r.destinataire || 'Premier Ministre')}</Data></Cell>
 <Cell ss:StyleID="cell_${rowStyle}"><Data ss:Type="String">${xmlEscape(r.objet)}</Data></Cell>
 <Cell ss:StyleID="cell_${rowStyle}"><Data ss:Type="String">${xmlEscape(r.niveauUrgence || '')}</Data></Cell>
 <Cell ss:StyleID="cell_${rowStyle}"><Data ss:Type="String">${xmlEscape(r.position)}</Data></Cell>

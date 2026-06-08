@@ -90,9 +90,9 @@ app.post('/api/store', async (req, res) => {
       for (const r of filteredRows) {
         const dateArrivee = toISODate(r.dateArrivee);
         await client.query(
-          `INSERT INTO courriers (numero, expediteur, objet, date_arrivee, niveau_urgence, etat, position)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-          [r.numero, r.expediteur, r.objet, dateArrivee, r.niveauUrgence || '', r.etat, r.position]
+          `INSERT INTO courriers (numero, expediteur, objet, date_arrivee, niveau_urgence, destinataire, etat, position)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+          [r.numero, r.expediteur, r.objet, dateArrivee, r.niveauUrgence || '', r.destinataire || 'Premier Ministre', r.etat, r.position]
         );
       }
     } finally {
@@ -125,11 +125,11 @@ app.get('/api/courriers', async (req, res) => {
 app.put('/api/courriers/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { etat, position, niveau_urgence } = req.body;
+    const { etat, position, niveau_urgence, destinataire } = req.body;
     const { rows } = await pool.query(
-      `UPDATE courriers SET etat = COALESCE($1, etat), position = COALESCE($2, position), niveau_urgence = COALESCE($3, niveau_urgence), updated_at = CURRENT_TIMESTAMP
-       WHERE id = $4 RETURNING *`,
-      [etat ?? null, position ?? null, niveau_urgence ?? null, id]
+      `UPDATE courriers SET etat = COALESCE($1, etat), position = COALESCE($2, position), niveau_urgence = COALESCE($3, niveau_urgence), destinataire = COALESCE($4, destinataire), updated_at = CURRENT_TIMESTAMP
+       WHERE id = $5 RETURNING *`,
+      [etat ?? null, position ?? null, niveau_urgence ?? null, destinataire ?? null, id]
     );
     if (!rows.length) return res.status(404).json({ error: 'Courrier introuvable.' });
     res.json({ success: true, row: rows[0] });
@@ -150,6 +150,7 @@ app.post('/api/generate', async (req, res) => {
       objet: r.objet,
       dateArrivee: r.date_arrivee ? dateToString(r.date_arrivee) : '',
       niveauUrgence: r.niveau_urgence || '',
+      destinataire: r.destinataire || 'Premier Ministre',
       etat: r.etat,
       position: r.position,
       positionSource: r.position
@@ -187,6 +188,7 @@ app.post('/api/send-mail', async (req, res) => {
       objet: r.objet,
       dateArrivee: r.date_arrivee ? dateToString(r.date_arrivee) : '',
       niveauUrgence: r.niveau_urgence || '',
+      destinataire: r.destinataire || 'Premier Ministre',
       etat: r.etat,
       position: r.position,
       positionSource: r.position
