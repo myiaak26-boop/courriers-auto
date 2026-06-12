@@ -1,7 +1,7 @@
 {
-  "name": "Secrétariat Central — Primature",
-  "short_name": "Courriers Auto",
-  "description": "Générateur de situations courriers pour le Secrétariat Central de la Primature",
+  "name": "SCD — PRIMATURE",
+  "short_name": "SCD — PRIMATURE",
+  "description": "SCD — PRIMATURE",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f0f4fa",
@@ -9,15 +9,15 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/icons/icon-192.svg",
+      "src": "/logo.png",
       "sizes": "192x192",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/icon-512.svg",
+      "src": "/logo.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ]
