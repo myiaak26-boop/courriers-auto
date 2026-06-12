@@ -116,7 +116,7 @@ function parseDate(s) {
 function getFilteredRows(rowsNorm, mode, dateDebut, dateFin) {
   if (mode === 'assigne_non_traite') {
     return rowsNorm.filter(r => {
-      if (normalizeHeader(r.etat) !== 'assigné') return false;
+      if (normalizeHeader(r.etat) !== 'assigne') return false;
       const d = parseDate(r.dateArrivee);
       if (!d) return true;
       if (dateDebut) { const dd = new Date(dateDebut + 'T00:00:00'); if (!isNaN(dd) && d < dd) return false; }
@@ -128,7 +128,7 @@ function getFilteredRows(rowsNorm, mode, dateDebut, dateFin) {
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const limiteHaute = new Date(today); limiteHaute.setDate(limiteHaute.getDate() - 5);
     return rowsNorm.filter(r => {
-      if (normalizeHeader(r.etat) !== 'assigné') return false;
+      if (normalizeHeader(r.etat) !== 'assigne') return false;
       const d = parseDate(r.dateArrivee);
       if (!d) return false;
       if (d > limiteHaute) return false;
