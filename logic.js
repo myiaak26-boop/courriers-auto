@@ -99,9 +99,13 @@ function normalizeObjects(objects) {
 function parseDate(s) {
   const str = cleanText(s);
   if (!str) return null;
-  const m = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
   let d = null;
-  if (m) d = new Date(+m[3], +m[2] - 1, +m[1]);
+  const iso = str.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+  if (iso) d = new Date(+iso[1], +iso[2] - 1, +iso[3]);
+  if (!d || isNaN(d)) {
+    const m = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if (m) d = new Date(+m[3], +m[2] - 1, +m[1]);
+  }
   if (!d || isNaN(d)) d = new Date(str);
   if (!d || isNaN(d)) return null;
   d.setHours(0, 0, 0, 0);
