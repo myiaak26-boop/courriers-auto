@@ -9,6 +9,7 @@ const { pool, initDB } = require('./db');
 const { processCSV, generateXLS, buildMailContent } = require('./logic');
 
 let cachedCsvText = '';
+let cachedRows = null;
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -80,9 +81,9 @@ app.post('/api/store', async (req, res) => {
     const { mode, dateDebut, dateFin } = req.body;
     if (!cachedCsvText) return res.status(400).json({ error: 'Aucun fichier importé. Revenez à l\'étape 1.' });
 
-    const allRows = processCSV(cachedCsvText);
+    if (!cachedRows) cachedRows = processCSV(cachedCsvText);
     const { getFilteredRows } = require('./logic');
-    const filteredRows = getFilteredRows(allRows, mode || 'all', dateDebut || '', dateFin || '');
+    const filteredRows = getFilteredRows(cachedRows, mode || 'all', dateDebut || '', dateFin || '');
 
     if (!filteredRows.length) {
       return res.status(400).json({ error: 'Aucun courrier trouvé pour les critères sélectionnés.' });
