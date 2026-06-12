@@ -174,7 +174,7 @@ app.post('/api/generate', async (req, res) => {
 
 app.post('/api/send-mail', async (req, res) => {
   try {
-    const { mode, dateDebut, dateFin, mailTo } = req.body;
+    const { mode, dateDebut, dateFin, mailTo, mailCc } = req.body;
     if (!process.env.SENDGRID_API_KEY) {
       return res.status(500).json({ error: 'Clé API SendGrid manquante sur le serveur.' });
     }
@@ -198,11 +198,13 @@ app.post('/api/send-mail', async (req, res) => {
     if (!result) return res.status(400).json({ error: 'Aucun courrier trouvé pour les critères sélectionnés.' });
 
     const { subject, text, html } = buildMailContent(mode || 'all', dateDebut || '', dateFin || '');
-    const recipients = Array.isArray(mailTo) && mailTo.length ? mailTo : [mailTo || process.env.MAIL_TO || 'aboubacar.bangoura@primature.gov.gn'];
+    const to = mailTo || process.env.MAIL_TO || 'aboubacar.bangoura@primature.gov.gn';
+    const cc = Array.isArray(mailCc) && mailCc.length ? mailCc : [];
     const fromAddr = process.env.MAIL_FROM || 'amadoukeita5263@gmail.com';
 
     await sgMail.send({
-      to: recipients,
+      to,
+      cc,
       from: fromAddr,
       replyTo: fromAddr,
       subject,
@@ -216,7 +218,8 @@ app.post('/api/send-mail', async (req, res) => {
       }]
     });
 
-    res.json({ success: true, message: `Mail envoyé à ${recipients.join(', ')}`, subject });
+    const allRecipients = [to, ...cc].join(', ');
+    res.json({ success: true, message: `Mail envoyé à ${allRecipients}`, subject });
   } catch (err) {
     console.error('Erreur envoi mail:', err.response?.body || err);
     res.status(500).json({ error: 'Erreur envoi mail : ' + (err.response?.body?.message || err.message) });

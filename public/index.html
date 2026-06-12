@@ -575,13 +575,17 @@ td.modified { background: #fef3c7 !important; outline: 2px solid var(--accent); 
     <div id="alert5-ok" class="alert alert-success"> <span id="alert5-ok-msg"></span></div>
 
     <div class="mail-input-wrap">
-      <label>Destinataires</label>
-      <div id="recipientTags" class="tag-list"></div>
+      <label>Destinataire principal (To)</label>
+      <input type="email" id="mailTo" value="aboubacar.bangoura@primature.gov.gn" placeholder="email@exemple.com" style="width:100%;border:2px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--navy);outline:none">
+    </div>
+    <div class="mail-input-wrap" style="margin-top:16px">
+      <label>CC (Copie carbone) — optionnel</label>
+      <div id="ccTags" class="tag-list"></div>
       <div style="display:flex;gap:8px">
-        <input type="email" id="mailInput" value="aboubacar.bangoura@primature.gov.gn" placeholder="email@exemple.com" style="flex:1;border:2px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--navy);outline:none">
-        <button type="button" class="btn btn-outline" id="addRecipientBtn" style="padding:10px 16px;font-size:13px">+ Ajouter</button>
+        <input type="email" id="ccInput" placeholder="email@exemple.com" style="flex:1;border:2px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--navy);outline:none">
+        <button type="button" class="btn btn-outline" id="addCcBtn" style="padding:10px 16px;font-size:13px">+ Ajouter</button>
       </div>
-      <p style="font-size:12px;color:var(--muted);margin-top:6px">Appuyez sur Entrée pour ajouter un destinataire</p>
+      <p style="font-size:12px;color:var(--muted);margin-top:6px">Appuyez sur Entrée pour ajouter un destinataire en copie</p>
     </div>
 
     <div style="background:var(--bg);border-radius:14px;padding:16px;margin-bottom:20px;font-size:13px;color:var(--muted)">
@@ -615,42 +619,42 @@ let currentMode = 'all';
 let generatedFileName = '';
 let modifiedIds = new Set();
 let dataStored = false;
-let recipients = [];
+let ccRecipients = [];
 
-function addRecipient(email) {
+function addCc(email) {
   const e = email.trim();
   if (!e) return;
-  if (recipients.includes(e)) return;
-  recipients.push(e);
-  renderRecipientTags();
-  document.getElementById('mailInput').value = '';
-  document.getElementById('mailInput').focus();
+  if (ccRecipients.includes(e)) return;
+  ccRecipients.push(e);
+  renderCcTags();
+  document.getElementById('ccInput').value = '';
+  document.getElementById('ccInput').focus();
 }
 
-function removeRecipient(email) {
-  recipients = recipients.filter(r => r !== email);
-  renderRecipientTags();
+function removeCc(email) {
+  ccRecipients = ccRecipients.filter(r => r !== email);
+  renderCcTags();
 }
 
-function renderRecipientTags() {
-  const container = document.getElementById('recipientTags');
-  container.innerHTML = recipients.map(r =>
-    `<span class="tag">${esc(r)}<span class="tag-remove" onclick="removeRecipient('${esc(r).replace(/'/g, "\\'")}')">×</span></span>`
+function renderCcTags() {
+  const container = document.getElementById('ccTags');
+  container.innerHTML = ccRecipients.map(r =>
+    `<span class="tag">${esc(r)}<span class="tag-remove" onclick="removeCc('${esc(r).replace(/'/g, "\\'")}')">×</span></span>`
   ).join('');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const input = document.getElementById('mailInput');
-  const btn = document.getElementById('addRecipientBtn');
+  const ccInput = document.getElementById('ccInput');
+  const ccBtn = document.getElementById('addCcBtn');
 
-  input.addEventListener('keydown', e => {
+  ccInput.addEventListener('keydown', e => {
     if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault();
-      addRecipient(input.value);
+      addCc(ccInput.value);
     }
   });
 
-  btn.addEventListener('click', () => addRecipient(input.value));
+  ccBtn.addEventListener('click', () => addCc(ccInput.value));
 });
 
 function goToStep(n) {
@@ -670,7 +674,7 @@ function goToStep(n) {
   }
   if (n === 5) {
     updateMailSubjectPreview();
-    if (!recipients.length) addRecipient('aboubacar.bangoura@primature.gov.gn');
+    renderCcTags();
   }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -1096,7 +1100,8 @@ async function sendMail() {
         mode: currentMode,
         dateDebut: document.getElementById('dateDebut').value,
         dateFin: document.getElementById('dateFin').value,
-        mailTo: recipients
+        mailTo: document.getElementById('mailTo').value,
+        mailCc: ccRecipients
       })
     });
     const data = await res.json();
@@ -1123,7 +1128,7 @@ function resetAll() {
   generatedFileName = '';
   modifiedIds = new Set();
   dataStored = false;
-  recipients = [];
+  ccRecipients = [];
 
   document.getElementById('uploadSuccess').style.display = 'none';
   document.getElementById('fileInput').value = '';
@@ -1153,7 +1158,7 @@ function newReport() {
   dataStored = false;
   modifiedIds = new Set();
   generatedFileName = '';
-  recipients = [];
+  ccRecipients = [];
 
   document.getElementById('btnToMail').style.display = 'none';
   document.getElementById('btnNewReport4').style.display = 'none';
