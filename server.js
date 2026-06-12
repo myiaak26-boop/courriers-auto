@@ -61,6 +61,7 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
     res.json({
       success: true,
       count: rows.length,
+      csvText,
       preview: rows.slice(0, 5).map(r => ({
         numero: r.numero,
         expediteur: r.expediteur,
