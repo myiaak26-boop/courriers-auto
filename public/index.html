@@ -696,21 +696,8 @@ function selectMode(mode) {
 }
 
 function setDefaultDates() {
-  const today = new Date();
-  const iso = today.toISOString().slice(0, 10);
-
-  if (currentMode === 'all') {
-    document.getElementById('dateDebut').value = iso;
-    document.getElementById('dateFin').value = '';
-  } else if (currentMode === 'assigne_non_traite') {
-    const start = new Date(today);
-    start.setDate(start.getDate() - 7);
-    document.getElementById('dateDebut').value = start.toISOString().slice(0, 10);
-    document.getElementById('dateFin').value = iso;
-  } else if (currentMode === 'en_retard') {
-    document.getElementById('dateDebut').value = today.getFullYear() + '-01-01';
-    document.getElementById('dateFin').value = iso;
-  }
+  document.getElementById('dateDebut').value = '';
+  document.getElementById('dateFin').value = '';
   updateDatePreview();
 }
 
@@ -719,7 +706,7 @@ function updateDateUI() {
   const label = document.getElementById('labelDebut');
   if (currentMode === 'all') {
     wrap.style.display = 'none';
-    label.textContent = 'Date';
+    label.textContent = 'Date (optionnelle)';
   } else {
     wrap.style.display = 'block';
     label.textContent = 'Date de début';
@@ -741,7 +728,7 @@ function updateDatePreview() {
     const d2 = new Date(fin + 'T00:00:00');
     if (!isNaN(d1) && !isNaN(d2)) el.textContent = 'Période : du ' + d1.getDate() + ' ' + mois[d1.getMonth()] + ' ' + d1.getFullYear() + ' au ' + d2.getDate() + ' ' + mois[d2.getMonth()] + ' ' + d2.getFullYear();
   } else {
-    el.textContent = '';
+    el.textContent = 'Laissez vide pour importer tous les courriers.';
   }
 }
 
