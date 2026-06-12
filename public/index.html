@@ -520,6 +520,7 @@ td.modified { background: #fef3c7 !important; outline: 2px solid var(--accent); 
       <button class="btn btn-primary" id="btn3Next" onclick="goToStep(4)" disabled>
         Continuer →
       </button>
+      <button class="btn btn-outline" onclick="newReport()" style="margin-left:auto">🔄 Nouveau rapport</button>
     </div>
   </div>
 
@@ -549,6 +550,7 @@ td.modified { background: #fef3c7 !important; outline: 2px solid var(--accent); 
       <button class="btn btn-success" id="btnToMail" onclick="goToStep(5)" style="display:none">
         Envoyer par mail →
       </button>
+      <button class="btn btn-outline" onclick="newReport()" style="display:none" id="btnNewReport4">🔄 Nouveau rapport</button>
     </div>
   </div>
 
@@ -576,6 +578,7 @@ td.modified { background: #fef3c7 !important; outline: 2px solid var(--accent); 
         <span id="spinner5" class="spinner"></span>
         📧 Envoyer le mail
       </button>
+      <button class="btn btn-outline" onclick="newReport()">🔄 Nouveau rapport</button>
     </div>
 
     <div id="mailSuccess" style="display:none;margin-top:20px" class="result-box">
@@ -1011,6 +1014,7 @@ async function generateFile() {
       document.getElementById('alert4-ok-msg').textContent = 'Fichier généré avec ' + count + ' courrier(s) — téléchargement démarré.';
       alert4ok.classList.add('show');
       document.getElementById('btnToMail').style.display = 'inline-flex';
+      document.getElementById('btnNewReport4').style.display = 'inline-flex';
     }
   } catch(e) {
     document.getElementById('alert4-msg').textContent = 'Erreur réseau : ' + e.message;
@@ -1084,6 +1088,30 @@ function resetAll() {
     ind.classList.remove('active', 'done');
   }
   goToStep(1);
+}
+
+function newReport() {
+  courriers = [];
+  dataStored = false;
+  modifiedIds = new Set();
+  generatedFileName = '';
+
+  document.getElementById('btnToMail').style.display = 'none';
+  document.getElementById('btnNewReport4').style.display = 'none';
+  document.getElementById('mailSuccess').style.display = 'none';
+  document.getElementById('btnSendMail').style.display = 'inline-flex';
+  document.getElementById('editableTableWrap').innerHTML = '';
+  document.getElementById('btn3Next').disabled = true;
+  document.getElementById('saveStatus').textContent = '';
+  document.getElementById('saveStatus').className = 'save-status';
+
+  document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('disabled'));
+  document.getElementById('dateDebut').disabled = false;
+  document.getElementById('dateFin').disabled = false;
+
+  document.querySelectorAll('.alert').forEach(a => a.classList.remove('show'));
+
+  goToStep(2);
 }
 
 if ('serviceWorker' in navigator) {
