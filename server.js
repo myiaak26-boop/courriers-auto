@@ -8,6 +8,8 @@ const { pool, initDB } = require('./db');
 
 const { processCSV, generateXLS, buildMailContent } = require('./logic');
 
+let cachedCsvText = '';
+
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
@@ -54,10 +56,11 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
 
     const rows = processCSV(csvText);
 
+    cachedCsvText = csvText;
+
     res.json({
       success: true,
       count: rows.length,
-      csvText,
       preview: rows.slice(0, 5).map(r => ({
         numero: r.numero,
         expediteur: r.expediteur,
@@ -73,10 +76,10 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
 
 app.post('/api/store', async (req, res) => {
   try {
-    const { csvText, mode, dateDebut, dateFin } = req.body;
-    if (!csvText) return res.status(400).json({ error: 'Données manquantes.' });
+    const { mode, dateDebut, dateFin } = req.body;
+    if (!cachedCsvText) return res.status(400).json({ error: 'Aucun fichier importé. Revenez à l\'étape 1.' });
 
-    const allRows = processCSV(csvText);
+    const allRows = processCSV(cachedCsvText);
     const { getFilteredRows } = require('./logic');
     const filteredRows = getFilteredRows(allRows, mode || 'all', dateDebut || '', dateFin || '');
 

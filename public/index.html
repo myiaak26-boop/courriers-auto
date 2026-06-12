@@ -833,7 +833,6 @@ async function storeData() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        csvText,
         mode: currentMode,
         dateDebut: document.getElementById('dateDebut').value,
         dateFin: document.getElementById('dateFin').value
