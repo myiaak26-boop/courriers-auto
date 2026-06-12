@@ -198,11 +198,11 @@ app.post('/api/send-mail', async (req, res) => {
     if (!result) return res.status(400).json({ error: 'Aucun courrier trouvé pour les critères sélectionnés.' });
 
     const { subject, text, html } = buildMailContent(mode || 'all', dateDebut || '', dateFin || '');
-    const recipient = mailTo || process.env.MAIL_TO || 'aboubacar.bangoura@primature.gov.gn';
+    const recipients = Array.isArray(mailTo) && mailTo.length ? mailTo : [mailTo || process.env.MAIL_TO || 'aboubacar.bangoura@primature.gov.gn'];
     const fromAddr = process.env.MAIL_FROM || 'amadoukeita5263@gmail.com';
 
     await sgMail.send({
-      to: recipient,
+      to: recipients,
       from: fromAddr,
       replyTo: fromAddr,
       subject,
@@ -216,7 +216,7 @@ app.post('/api/send-mail', async (req, res) => {
       }]
     });
 
-    res.json({ success: true, message: `Mail envoyé à ${recipient}`, subject });
+    res.json({ success: true, message: `Mail envoyé à ${recipients.join(', ')}`, subject });
   } catch (err) {
     console.error('Erreur envoi mail:', err.response?.body || err);
     res.status(500).json({ error: 'Erreur envoi mail : ' + (err.response?.body?.message || err.message) });
