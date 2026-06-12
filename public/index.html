@@ -500,7 +500,7 @@ td.modified { background: #fef3c7 !important; outline: 2px solid var(--accent); 
   <div class="card" id="card3">
     <div class="card-title">Étape 3 — Modifier les données</div>
     <div class="card-subtitle">
-      Modifiez les champs <strong>Urgence</strong>, <strong>État</strong> et <strong>Position</strong> directement dans le tableau, puis enregistrez.
+      Modifiez les champs <strong>Destinataire</strong> et <strong>Urgence</strong> directement dans le tableau, puis enregistrez.
     </div>
 
     <div id="alert3" class="alert alert-error"> <span id="alert3-msg"></span></div>
@@ -672,8 +672,6 @@ async function handleUpload(file) {
     document.getElementById('uploadSuccess').style.display = 'block';
     btn.disabled = false;
 
-    setDefaultDates();
-
   } catch(e) {
     alert1msg.textContent = 'Erreur réseau : ' + e.message;
     alert1.classList.add('show');
@@ -696,8 +694,21 @@ function selectMode(mode) {
 }
 
 function setDefaultDates() {
-  document.getElementById('dateDebut').value = '';
-  document.getElementById('dateFin').value = '';
+  const today = new Date();
+  const iso = today.toISOString().slice(0, 10);
+
+  if (currentMode === 'all') {
+    document.getElementById('dateDebut').value = iso;
+    document.getElementById('dateFin').value = '';
+  } else if (currentMode === 'assigne_non_traite') {
+    const start = new Date(today);
+    start.setDate(start.getDate() - 7);
+    document.getElementById('dateDebut').value = start.toISOString().slice(0, 10);
+    document.getElementById('dateFin').value = iso;
+  } else if (currentMode === 'en_retard') {
+    document.getElementById('dateDebut').value = today.getFullYear() + '-01-01';
+    document.getElementById('dateFin').value = iso;
+  }
   updateDatePreview();
 }
 
@@ -813,8 +824,8 @@ function renderEditableTable() {
     html += '<td>' + esc(c.objet) + '</td>';
     html += '<td>' + esc(dateStr) + '</td>';
     html += '<td contenteditable="true" data-field="niveau_urgence" data-id="' + c.id + '" onblur="onCellChange(this)">' + esc(c.niveau_urgence || '') + '</td>';
-    html += '<td contenteditable="true" data-field="etat" data-id="' + c.id + '" onblur="onCellChange(this)">' + esc(c.etat) + '</td>';
-    html += '<td contenteditable="true" data-field="position" data-id="' + c.id + '" onblur="onCellChange(this)">' + esc(c.position) + '</td>';
+    html += '<td>' + esc(c.etat) + '</td>';
+    html += '<td>' + esc(c.position) + '</td>';
     html += '</tr>';
   }
 
