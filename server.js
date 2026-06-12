@@ -203,12 +203,11 @@ app.post('/api/send-mail', async (req, res) => {
 
     const { subject, text, html } = buildMailContent(mode || 'all', dateDebut || '', dateFin || '');
     const to = mailTo || process.env.MAIL_TO || 'aboubacar.bangoura@primature.gov.gn';
-    const cc = Array.isArray(mailCc) && mailCc.length ? mailCc : [];
+    const cc = Array.isArray(mailCc) && mailCc.length ? mailCc : undefined;
     const fromAddr = process.env.MAIL_FROM || 'amadoukeita5263@gmail.com';
 
-    await sgMail.send({
+    const msg = {
       to,
-      cc,
       from: fromAddr,
       replyTo: fromAddr,
       subject,
@@ -220,9 +219,12 @@ app.post('/api/send-mail', async (req, res) => {
         type: 'application/vnd.ms-excel',
         disposition: 'attachment'
       }]
-    });
+    };
+    if (cc) msg.cc = cc;
 
-    const allRecipients = [to, ...cc].join(', ');
+    await sgMail.send(msg);
+
+    const allRecipients = cc ? [to, ...cc].join(', ') : to;
     res.json({ success: true, message: `Mail envoyé à ${allRecipients}`, subject });
   } catch (err) {
     console.error('Erreur envoi mail:', err.response?.body || err);
