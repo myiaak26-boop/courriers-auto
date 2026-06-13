@@ -20,18 +20,6 @@ async function getSession(sessionId) {
   return rows[0] || null;
 }
 
-async function listSessions(limit = 5) {
-  const { rows } = await pool.query(
-    'SELECT session_id, file_name, mode, courrier_count, created_at FROM sessions ORDER BY created_at DESC LIMIT $1',
-    [limit]
-  );
-  return rows;
-}
-
-async function cleanOldSessions(hours = 1) {
-  await pool.query('DELETE FROM sessions WHERE created_at < NOW() - INTERVAL \'1 hour\' * $1', [hours]);
-}
-
 async function getAllCourriers() {
   const { rows } = await pool.query('SELECT * FROM courriers ORDER BY id');
   return rows;
@@ -68,6 +56,6 @@ async function insertCourriers(rows) {
 }
 
 module.exports = {
-  createSession, getSession, listSessions, cleanOldSessions,
+  createSession, getSession,
   getAllCourriers, updateCourrier, deleteAllCourriers, insertCourriers
 };
