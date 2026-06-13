@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SCD — PRIMATURE</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#0f2545">
 <meta name="mobile-web-app-capable" content="yes">
@@ -431,28 +430,6 @@ td.modified { background: #fef3c7 !important; outline: 2px solid var(--accent); 
 
 <main>
 
-  <div class="card" id="cardDashboard" style="display:block">
-    <div class="card-title">📊 Tableau de bord</div>
-    <div class="card-subtitle">Statistiques globales des courriers en base.</div>
-    <div id="dashboardAlert" class="alert alert-info" style="display:flex">Chargez un fichier pour voir les statistiques.</div>
-    <div id="dashboardContent" style="display:none">
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
-        <div style="background:var(--bg);border-radius:14px;padding:14px">
-          <h4 style="font-size:13px;color:var(--navy);margin-bottom:8px">Courriers par état</h4>
-          <canvas id="chartEtat" height="180"></canvas>
-        </div>
-        <div style="background:var(--bg);border-radius:14px;padding:14px">
-          <h4 style="font-size:13px;color:var(--navy);margin-bottom:8px">Top 10 expéditeurs</h4>
-          <canvas id="chartExpediteurs" height="180"></canvas>
-        </div>
-        <div style="background:var(--bg);border-radius:14px;padding:14px">
-          <h4 style="font-size:13px;color:var(--navy);margin-bottom:8px">Évolution hebdomadaire</h4>
-          <canvas id="chartEvolution" height="180"></canvas>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <div class="stepper">
     <div class="step active" id="step1-indicator">
       <div class="step-num"><span>1</span></div>
@@ -686,7 +663,6 @@ let modifiedIds = new Set();
 let dataStored = false;
 let ccRecipients = [];
 let autoSaveTimer = null;
-let dashboardCharts = {};
 
 function addCc(email) {
   const e = email.trim();
@@ -723,7 +699,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   ccBtn.addEventListener('click', () => addCc(ccInput.value));
 
-  renderDashboard();
   loadSessions();
 });
 
@@ -930,7 +905,6 @@ async function storeData() {
     document.getElementById('dateFin').disabled = true;
 
     renderEditableTable();
-    renderDashboard();
 
   } catch(e) {
     document.getElementById('alert2-msg').textContent = 'Erreur réseau : ' + e.message;
@@ -1247,54 +1221,6 @@ async function generatePDF() {
     alert4.classList.add('show');
   }
   if (sp) sp.classList.remove('show'); if (btn) btn.disabled = false;
-}
-
-async function renderDashboard() {
-  try {
-    const res = await fetch('/api/dashboard');
-    const data = await res.json();
-    if (!data.success || !data.data) return;
-
-    const dash = data.data;
-    const hasData = dash.byEtat && dash.byEtat.length > 0;
-
-    document.getElementById('dashboardAlert').style.display = hasData ? 'none' : 'flex';
-    document.getElementById('dashboardContent').style.display = hasData ? 'block' : 'none';
-    if (!hasData) return;
-
-    if (dashboardCharts.etat) dashboardCharts.etat.destroy();
-    if (dashboardCharts.exp) dashboardCharts.exp.destroy();
-    if (dashboardCharts.evol) dashboardCharts.evol.destroy();
-
-    const colors = ['#b91c1c', '#d97706', '#0e7a4e', '#1a3f7a', '#6b7a99', '#c8960c'];
-
-    dashboardCharts.etat = new Chart(document.getElementById('chartEtat'), {
-      type: 'bar', data: {
-        labels: dash.byEtat.map(r => r.etat),
-        datasets: [{ label: 'Courriers', data: dash.byEtat.map(r => r.count), backgroundColor: colors.slice(0, dash.byEtat.length) }]
-      },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
-    });
-
-    dashboardCharts.exp = new Chart(document.getElementById('chartExpediteurs'), {
-      type: 'bar', data: {
-        labels: dash.topExpediteurs.map(r => r.expediteur.length > 20 ? r.expediteur.slice(0, 20) + '...' : r.expediteur),
-        datasets: [{ label: 'Courriers', data: dash.topExpediteurs.map(r => r.count), backgroundColor: '#1a3f7a' }]
-      },
-      options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-        scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } } }
-    });
-
-    dashboardCharts.evol = new Chart(document.getElementById('chartEvolution'), {
-      type: 'line', data: {
-        labels: dash.weeklyEvolution.map(r => r.semaine ? r.semaine.slice(5) : ''),
-        datasets: [{ label: 'Courriers', data: dash.weeklyEvolution.map(r => r.count), borderColor: '#0e7a4e', backgroundColor: 'rgba(14,122,78,0.1)', fill: true, tension: 0.3 }]
-      },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
-    });
-  } catch(e) { /* silent */ }
 }
 
 async function loadSessions() {

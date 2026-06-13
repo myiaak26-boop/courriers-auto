@@ -67,34 +67,7 @@ async function insertCourriers(rows) {
   }
 }
 
-async function getCountByEtat() {
-  const { rows } = await pool.query(
-    "SELECT COALESCE(NULLIF(etat, ''), 'Non assigné') as etat, COUNT(*)::int as count FROM courriers GROUP BY etat ORDER BY count DESC"
-  );
-  return rows;
-}
-
-async function getTopExpediteurs(limit = 10) {
-  const { rows } = await pool.query(
-    "SELECT COALESCE(NULLIF(expediteur, ''), 'Non renseigné') as expediteur, COUNT(*)::int as count FROM courriers GROUP BY expediteur ORDER BY count DESC LIMIT $1",
-    [limit]
-  );
-  return rows;
-}
-
-async function getWeeklyEvolution() {
-  const { rows } = await pool.query(`
-    SELECT to_char(date_trunc('week', date_arrivee), 'YYYY-MM-DD') as semaine,
-           COUNT(*)::int as count
-    FROM courriers WHERE date_arrivee IS NOT NULL
-    GROUP BY date_trunc('week', date_arrivee)
-    ORDER BY semaine DESC LIMIT 12
-  `);
-  return rows.reverse();
-}
-
 module.exports = {
   createSession, getSession, listSessions, cleanOldSessions,
-  getAllCourriers, updateCourrier, deleteAllCourriers, insertCourriers,
-  getCountByEtat, getTopExpediteurs, getWeeklyEvolution
+  getAllCourriers, updateCourrier, deleteAllCourriers, insertCourriers
 };

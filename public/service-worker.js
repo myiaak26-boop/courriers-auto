@@ -1,4 +1,4 @@
-const CACHE_NAME = 'courriers-auto-v1';
+const CACHE_NAME = 'courriers-auto-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -26,7 +26,9 @@ self.addEventListener('fetch', event => {
 
   if (request.method !== 'GET') return;
 
-  if (url.pathname.startsWith('/api/')) {
+  if (url.pathname.startsWith('/api/') || url.pathname === '/health') {
+    event.respondWith(networkFirst(request));
+  } else if (url.pathname === '/' || url.pathname === '/index.html') {
     event.respondWith(networkFirst(request));
   } else {
     event.respondWith(cacheFirst(request));
