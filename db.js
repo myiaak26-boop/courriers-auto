@@ -28,9 +28,20 @@ async function initDB() {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    await client.query(`CREATE TABLE IF NOT EXISTS sessions (
+      id SERIAL PRIMARY KEY,
+      session_id VARCHAR(64) NOT NULL UNIQUE,
+      csv_text TEXT NOT NULL DEFAULT '',
+      file_name VARCHAR(255) DEFAULT '',
+      mode VARCHAR(50) DEFAULT 'all',
+      date_debut VARCHAR(20) DEFAULT '',
+      date_fin VARCHAR(20) DEFAULT '',
+      courrier_count INTEGER DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
     await client.query('ALTER TABLE courriers ADD COLUMN IF NOT EXISTS niveau_urgence VARCHAR(50) DEFAULT \'\'');
     await client.query('ALTER TABLE courriers ADD COLUMN IF NOT EXISTS destinataire VARCHAR(255) DEFAULT \'Premier Ministre\'');
-    console.log('Table "courriers" prête');
+    console.log('Tables "courriers" et "sessions" prêtes');
   } finally {
     client.release();
   }

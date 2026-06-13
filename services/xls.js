@@ -1,9 +1,3 @@
-/**
- * logic.js — Toute la logique métier portée du HTML vers Node.js
- * Parsing CSV, filtrage, génération XLS
- */
-
-// ── Helpers texte ──────────────────────────────────────────────────────────
 function normalizeHeader(h) {
   return String(h ?? '')
     .replace(/^\uFEFF/, '')
@@ -11,91 +5,11 @@ function normalizeHeader(h) {
     .replace(/[^a-zA-Z0-9]+/g, ' ')
     .trim().toLowerCase();
 }
+
 function cleanText(v) {
   return String(v ?? '').replace(/\r/g, ' ').replace(/\n+/g, ' ').replace(/\s+/g, ' ').trim();
 }
-function cleanPosition(v) {
-  return cleanText(v).replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+/g, ' ').trim();
-}
-function keepLeftOfDash(v) {
-  const s = cleanText(v);
-  if (!s) return '';
-  return s.split('-')[0].trim();
-}
 
-// ── Parser CSV (gère virgule ET point-virgule, guillemets, retours à la ligne) ──
-function parseDelimited(text) {
-  text = String(text || '').replace(/^\uFEFF/, '');
-  const firstLine = text.split(/\r?\n/)[0] || '';
-  const semi = (firstLine.match(/;/g) || []).length;
-  const comma = (firstLine.match(/,/g) || []).length;
-  const delimiter = semi > comma ? ';' : ',';
-  const rows = []; let row = []; let cell = ''; let q = false;
-  for (let i = 0; i < text.length; i++) {
-    const ch = text[i];
-    if (ch === '"') {
-      if (q && text[i + 1] === '"') { cell += '"'; i++; }
-      else { q = !q; }
-    } else if (ch === delimiter && !q) {
-      row.push(cell); cell = '';
-    } else if ((ch === '\n' || ch === '\r') && !q) {
-      if (ch === '\r' && text[i + 1] === '\n') i++;
-      row.push(cell); cell = '';
-      if (row.some(v => String(v).trim() !== '')) rows.push(row);
-      row = [];
-    } else {
-      cell += ch;
-    }
-  }
-  row.push(cell);
-  if (row.some(v => String(v).trim() !== '')) rows.push(row);
-  return rows;
-}
-
-function rowsToObjects(grid) {
-  if (!grid.length) return [];
-  const headers = grid[0].map(h => String(h ?? ''));
-  return grid.slice(1).map(r => {
-    const obj = {};
-    headers.forEach((h, i) => obj[h] = r[i] ?? '');
-    return obj;
-  });
-}
-
-function pick(obj, names) {
-  const map = {};
-  Object.keys(obj).forEach(k => map[normalizeHeader(k)] = obj[k]);
-  for (const name of names) {
-    const key = normalizeHeader(name);
-    if (Object.prototype.hasOwnProperty.call(map, key)) return map[key];
-  }
-  return '';
-}
-
-function normalizeObjects(objects) {
-  return objects.map(o => {
-    const numeroRaw = pick(o, ['Numéro', 'Numero']);
-    const expediteur = cleanText(pick(o, ['Expéditeur', 'Expediteur']));
-    const objet = cleanText(pick(o, ['Objet']));
-    const etatSource = cleanText(pick(o, ['Etat', 'État']));
-    const positionRaw = cleanText(pick(o, ['Position']));
-    const position = cleanPosition(positionRaw);
-    const dateArrivee = pick(o, ["Date d' Arrivée", "Date d'Arrivée", "Date d Arrivee", "Date Arrivee"]);
-    const niveauUrgence = cleanText(pick(o, ['Niveau d Urgence', 'Niveau d\'Urgence', 'Niveau Urgence', 'Urgence']));
-    const destinataire = cleanText(pick(o, ['Destinataire'])) || 'Premier Ministre';
-    const numero = keepLeftOfDash(numeroRaw);
-    if (!(numero || expediteur || objet)) return null;
-    let etat = etatSource;
-    const etatNorm = normalizeHeader(etatSource);
-    if (etatNorm === 'enregistre') etat = 'Non assigné';
-    else if (etatNorm === 'assigne') etat = 'Assigné';
-    else if (etatNorm === 'non assigne') etat = 'Non assigné';
-    else etat = etat || 'Non assigné';
-    return { numero, expediteur, objet, dateArrivee, niveauUrgence, destinataire, etat, position, positionSource: positionRaw };
-  }).filter(Boolean).sort((a, b) => (parseInt(b.numero || '0', 10) || 0) - (parseInt(a.numero || '0', 10) || 0));
-}
-
-// ── Parse date d/m/yyyy ou ISO ──────────────────────────────────────────────
 function parseDate(s) {
   const str = cleanText(s);
   if (!str) return null;
@@ -112,7 +26,6 @@ function parseDate(s) {
   return d;
 }
 
-// ── Filtrage selon le mode ──────────────────────────────────────────────────
 function getFilteredRows(rowsNorm, mode, dateDebut, dateFin) {
   if (mode === 'assigne_non_traite') {
     return rowsNorm.filter(r => {
@@ -137,7 +50,6 @@ function getFilteredRows(rowsNorm, mode, dateDebut, dateFin) {
       return true;
     });
   }
-  // mode 'all' — filtre par date unique
   if (dateDebut) {
     return rowsNorm.filter(r => {
       const d = parseDate(r.dateArrivee);
@@ -150,7 +62,6 @@ function getFilteredRows(rowsNorm, mode, dateDebut, dateFin) {
   return rowsNorm.slice();
 }
 
-// ── Calcul jours de retard ─────────────────────────────────────────────────
 function calcJoursRetard(dateArrivee) {
   const d = parseDate(dateArrivee);
   if (!d) return '';
@@ -158,7 +69,6 @@ function calcJoursRetard(dateArrivee) {
   return Math.floor((today - d) / 86400000);
 }
 
-// ── Label date pour le titre ────────────────────────────────────────────────
 function buildDateRangeLabel(mode, dateDebut, dateFin) {
   const mois = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
   const jours = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
@@ -219,9 +129,14 @@ function buildFileDateSuffix(mode, dateDebut, dateFin) {
   return new Date().toISOString().slice(0, 10);
 }
 
-// ── Génération XML/XLS (identique au HTML) ─────────────────────────────────
 function xmlEscape(s) {
   return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function dateToString(d) {
+  if (!d) return '';
+  if (typeof d === 'string') return d.slice(0, 10);
+  return d.toISOString().slice(0, 10);
 }
 
 function generateXLS(rowsNorm, rawRowsNorm, mode, dateDebut, dateFin) {
@@ -340,67 +255,4 @@ ${mode === 'en_retard' ? concernesRows : senderRows}
   return { xml, fileName, count: rowsExport.length, workbookTitle };
 }
 
-// ── Mail subjects & body ────────────────────────────────────────────────────
-function buildMailContent(mode, dateDebut, dateFin) {
-  const mois = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-  const jours = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
-  const today = new Date();
-  const dateLabel = buildDateRangeLabel(mode, dateDebut, dateFin) ||
-    jours[today.getDay()] + ' ' + String(today.getDate()).padStart(2, '0') + ' ' + mois[today.getMonth()] + ' ' + today.getFullYear();
-
-  function wrapHtml(bodyText) {
-    return `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#1a2540;background:#f4f7fc;padding:0;margin:0">
-<div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08)">
-<div style="background:linear-gradient(135deg,#0f2545,#1a3f7a);padding:20px 28px">
-<h1 style="color:#ffffff;font-size:18px;margin:0;font-weight:700">SECRÉTARIAT CENTRAL — PRIMATURE</h1>
-</div>
-<div style="padding:28px;color:#1a2540;font-size:14px;line-height:1.6">
-${bodyText}
-</div>
-</div></body></html>`;
-  }
-
-  if (mode === 'all') {
-    return {
-      subject: `SITUATION JOURNALIÈRE DES COURRIERS ARRIVÉS — ${dateLabel}`,
-      text: `Bonsoir Chef,\n\nVeuillez trouver en pièce jointe la situation journalière des courriers arrivés du ${dateLabel}.\n\nCordialement.`,
-      html: wrapHtml(`<p style="margin:0 0 16px">Bonsoir Chef,</p>
-<p style="margin:0 0 16px">Veuillez trouver en pièce jointe la <strong>situation journalière des courriers arrivés</strong> du <strong>${dateLabel}</strong>.</p>
-<p style="margin:0">Cordialement.</p>`)
-    };
-  }
-  if (mode === 'en_retard') {
-    return {
-      subject: `SITUATION DES COURRIERS EN RETARD DE TRAITEMENT — ${dateLabel}`,
-      text: `Bonsoir Chef,\n\nVeuillez trouver en pièce jointe la situation des courriers en retard de traitement ${dateLabel}.\n\nCordialement.`,
-      html: wrapHtml(`<p style="margin:0 0 16px">Bonsoir Chef,</p>
-<p style="margin:0 0 16px">Veuillez trouver en pièce jointe la <strong>situation des courriers en retard de traitement</strong> ${dateLabel}.</p>
-<p style="margin:0">Cordialement.</p>`)
-    };
-  }
-  return {
-    subject: `SITUATION DES COURRIERS ASSIGNÉS NON TRAITÉS — ${dateLabel}`,
-    text: `Bonsoir Chef,\n\nVeuillez trouver en pièce jointe la situation des courriers assignés non traités ${dateLabel}.\n\nCordialement.`,
-    html: wrapHtml(`<p style="margin:0 0 16px">Bonsoir Chef,</p>
-<p style="margin:0 0 16px">Veuillez trouver en pièce jointe la <strong>situation des courriers assignés non traités</strong> ${dateLabel}.</p>
-<p style="margin:0">Cordialement.</p>`)
-  };
-}
-
-// ── Export principal ────────────────────────────────────────────────────────
-function processCSV(csvText) {
-  const grid = parseDelimited(csvText);
-  const objects = rowsToObjects(grid);
-  const headersNorm = grid[0] ? grid[0].map(normalizeHeader) : [];
-  const okNumero = headersNorm.includes('numero');
-  const okExp = headersNorm.includes('expediteur');
-  const okObjet = headersNorm.includes('objet');
-  if (!okNumero || !okExp || !okObjet) {
-    throw new Error('En-têtes non reconnues. Vérifiez que le fichier contient les colonnes Numéro, Expéditeur, Objet.');
-  }
-  const rows = normalizeObjects(objects);
-  if (!rows.length) throw new Error('Aucune ligne exploitable trouvée dans le fichier.');
-  return rows;
-}
-
-module.exports = { processCSV, generateXLS, buildMailContent, getFilteredRows };
+module.exports = { generateXLS, getFilteredRows, buildDateRangeLabel, dateToString, buildFileDateSuffix };

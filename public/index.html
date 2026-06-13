@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SCD — PRIMATURE</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#0f2545">
 <meta name="mobile-web-app-capable" content="yes">
@@ -385,6 +386,38 @@ td.modified { background: #fef3c7 !important; outline: 2px solid var(--accent); 
   transition: opacity 0.15s;
 }
 .tag-remove:hover { opacity: 1; }
+
+.urgency-dot {
+  display: inline-block; width: 10px; height: 10px;
+  border-radius: 50%; margin-right: 5px; vertical-align: middle;
+}
+.urgency-red { background: #b91c1c; }
+.urgency-orange { background: #d97706; }
+.urgency-green { background: #0e7a4e; }
+.urgency-gray { background: #9ca3af; }
+
+.dense td { padding: 6px 10px; font-size: 11px; }
+.dense th { padding: 7px 10px; font-size: 11px; }
+.comfort td { padding: 9px 12px; }
+.comfort th { padding: 10px 12px; }
+
+.session-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; border-radius: 12px;
+  background: var(--bg); margin-bottom: 8px;
+  cursor: pointer; transition: background 0.15s;
+}
+.session-item:hover { background: #e8edf5; }
+.session-item .s-date { font-size: 12px; color: var(--muted); min-width: 100px; }
+.session-item .s-file { font-size: 13px; font-weight: 500; flex: 1; color: var(--navy); }
+.session-item .s-count { font-size: 12px; color: var(--muted); }
+.session-item .s-btn { font-size: 12px; padding: 5px 12px; }
+
+#btnPDF {
+  background: linear-gradient(135deg, #dc2626, #ef4444);
+  color: white; box-shadow: 0 4px 14px rgba(220,38,38,0.3);
+}
+#btnPDF:hover:not(:disabled) { transform: translateY(-1px); }
 </style>
 </head>
 <body>
@@ -397,6 +430,28 @@ td.modified { background: #fef3c7 !important; outline: 2px solid var(--accent); 
 </header>
 
 <main>
+
+  <div class="card" id="cardDashboard" style="display:block">
+    <div class="card-title">📊 Tableau de bord</div>
+    <div class="card-subtitle">Statistiques globales des courriers en base.</div>
+    <div id="dashboardAlert" class="alert alert-info" style="display:flex">Chargez un fichier pour voir les statistiques.</div>
+    <div id="dashboardContent" style="display:none">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
+        <div style="background:var(--bg);border-radius:14px;padding:14px">
+          <h4 style="font-size:13px;color:var(--navy);margin-bottom:8px">Courriers par état</h4>
+          <canvas id="chartEtat" height="180"></canvas>
+        </div>
+        <div style="background:var(--bg);border-radius:14px;padding:14px">
+          <h4 style="font-size:13px;color:var(--navy);margin-bottom:8px">Top 10 expéditeurs</h4>
+          <canvas id="chartExpediteurs" height="180"></canvas>
+        </div>
+        <div style="background:var(--bg);border-radius:14px;padding:14px">
+          <h4 style="font-size:13px;color:var(--navy);margin-bottom:8px">Évolution hebdomadaire</h4>
+          <canvas id="chartEvolution" height="180"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <div class="stepper">
     <div class="step active" id="step1-indicator">
@@ -442,6 +497,11 @@ td.modified { background: #fef3c7 !important; outline: 2px solid var(--accent); 
         <span class="badge badge-gold" id="lineCount"></span>
       </div>
       <div id="previewTable"></div>
+    </div>
+
+    <div id="sessionHistory" style="margin-top:20px">
+      <h4 style="font-family:'Syne',sans-serif;font-size:14px;color:var(--navy);margin-bottom:10px">📜 Imports récents</h4>
+      <div id="sessionList"></div>
     </div>
 
     <div class="btn-row">
@@ -558,7 +618,11 @@ td.modified { background: #fef3c7 !important; outline: 2px solid var(--accent); 
       <button class="btn btn-outline" onclick="goToStep(3)">← Retour</button>
       <button class="btn btn-primary" id="btnGenerate" onclick="generateFile()">
         <span id="spinner4" class="spinner"></span>
-        ⚡ Générer &amp; Télécharger
+        ⚡ Générer XLS
+      </button>
+      <button class="btn" id="btnPDF" onclick="generatePDF()" style="display:none;border:none;border-radius:12px;padding:13px 24px;font-family:'Syne',sans-serif;font-weight:700;font-size:15px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#dc2626,#ef4444);color:white;box-shadow:0 4px 14px rgba(220,38,38,0.3)">
+        <span id="spinnerPdf" class="spinner"></span>
+        📄 Générer PDF
       </button>
       <button class="btn btn-success" id="btnToMail" onclick="goToStep(5)" style="display:none">
         Envoyer par mail →
@@ -613,7 +677,7 @@ td.modified { background: #fef3c7 !important; outline: 2px solid var(--accent); 
 </main>
 
 <script>
-let csvText = '';
+let sessionId = '';
 let courriers = [];
 let totalLines = 0;
 let currentMode = 'all';
@@ -621,6 +685,8 @@ let generatedFileName = '';
 let modifiedIds = new Set();
 let dataStored = false;
 let ccRecipients = [];
+let autoSaveTimer = null;
+let dashboardCharts = {};
 
 function addCc(email) {
   const e = email.trim();
@@ -656,6 +722,9 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   ccBtn.addEventListener('click', () => addCc(ccInput.value));
+
+  renderDashboard();
+  loadSessions();
 });
 
 function goToStep(n) {
@@ -716,7 +785,7 @@ async function handleUpload(file) {
       return;
     }
 
-    csvText = data.csvText;
+    sessionId = data.sessionId;
     totalLines = data.count;
 
     const preview = data.preview || [];
@@ -736,6 +805,7 @@ async function handleUpload(file) {
     document.getElementById('previewTable').innerHTML = html;
     document.getElementById('uploadSuccess').style.display = 'block';
     btn.disabled = false;
+    loadSessions();
 
   } catch(e) {
     alert1msg.textContent = 'Erreur réseau : ' + e.message;
@@ -815,7 +885,7 @@ updateDateUI();
 setDefaultDates();
 
 async function storeData() {
-  if (!csvText) {
+  if (!sessionId) {
     document.getElementById('alert2-msg').textContent = 'Aucune donnée importée. Revenez à l\'étape 1.';
     document.getElementById('alert2').classList.add('show');
     return;
@@ -834,6 +904,7 @@ async function storeData() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        sessionId,
         mode: currentMode,
         dateDebut: document.getElementById('dateDebut').value,
         dateFin: document.getElementById('dateFin').value
@@ -859,6 +930,7 @@ async function storeData() {
     document.getElementById('dateFin').disabled = true;
 
     renderEditableTable();
+    renderDashboard();
 
   } catch(e) {
     document.getElementById('alert2-msg').textContent = 'Erreur réseau : ' + e.message;
@@ -868,6 +940,14 @@ async function storeData() {
   }
 }
 
+function urgencyLevel(text) {
+  const t = (text || '').toLowerCase().trim();
+  if (/urgent|eleve|haute|critique|tres/.test(t)) return 'red';
+  if (/moyen|normal/.test(t)) return 'orange';
+  if (/faible|basse/.test(t)) return 'green';
+  return 'gray';
+}
+
 function renderEditableTable() {
   const wrap = document.getElementById('editableTableWrap');
   if (!courriers.length) {
@@ -875,19 +955,25 @@ function renderEditableTable() {
     return;
   }
 
-  let html = '<div class="table-container"><div class="table-wrap"><table><thead><tr>';
+  const dense = localStorage.getItem('tableDensity') !== 'comfort';
+  let html = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">';
+  html += '<span style="font-size:12px;color:var(--muted)">Densité :</span>';
+  html += '<button class="btn btn-outline" style="padding:5px 12px;font-size:12px" onclick="toggleDensity()">' + (dense ? 'Confort' : 'Dense') + '</button>';
+  html += '</div>';
+  html += '<div class="table-container"><div class="table-wrap"><table class="' + (dense ? 'dense' : 'comfort') + '" id="editableTable"><thead><tr>';
   html += '<th>N°</th><th>Expéditeur</th><th>Destinataire</th><th>Objet</th><th>Date arrivée</th><th>Urgence</th><th>État</th><th>Position</th>';
   html += '</tr></thead><tbody>';
 
   for (const c of courriers) {
     const dateStr = c.date_arrivee ? c.date_arrivee.toString().slice(0, 10) : '';
+    const urgLevel = urgencyLevel(c.niveau_urgence);
     html += '<tr data-id="' + c.id + '">';
     html += '<td>' + esc(c.numero) + '</td>';
     html += '<td>' + esc(c.expediteur) + '</td>';
-    html += '<td contenteditable="true" data-field="destinataire" data-id="' + c.id + '" onblur="onCellChange(this)">' + esc(c.destinataire || 'Premier Ministre') + '</td>';
+    html += '<td contenteditable="true" data-field="destinataire" data-id="' + c.id + '" oninput="onCellChange(this)">' + esc(c.destinataire || 'Premier Ministre') + '</td>';
     html += '<td>' + esc(c.objet) + '</td>';
     html += '<td>' + esc(dateStr) + '</td>';
-    html += '<td contenteditable="true" data-field="niveau_urgence" data-id="' + c.id + '" onblur="onCellChange(this)">' + esc(c.niveau_urgence || '') + '</td>';
+    html += '<td contenteditable="true" data-field="niveau_urgence" data-id="' + c.id + '" oninput="onCellChange(this)"><span class="urgency-dot urgency-' + urgLevel + '"></span>' + esc(c.niveau_urgence || '') + '</td>';
     html += '<td>' + esc(c.etat) + '</td>';
     html += '<td>' + esc(c.position) + '</td>';
     html += '</tr>';
@@ -904,6 +990,16 @@ function renderEditableTable() {
   goToStep(3);
 }
 
+function toggleDensity() {
+  const tbl = document.getElementById('editableTable');
+  if (!tbl) return;
+  const dense = tbl.classList.contains('dense');
+  tbl.className = dense ? 'comfort' : 'dense';
+  localStorage.setItem('tableDensity', dense ? 'comfort' : 'dense');
+  const btn = event.target;
+  if (btn) btn.textContent = dense ? 'Dense' : 'Confort';
+}
+
 function esc(s) {
   const el = document.createElement('div');
   el.textContent = s || '';
@@ -915,21 +1011,27 @@ function onCellChange(el) {
   modifiedIds.add(id);
   el.classList.add('modified');
   updateSaveStatus();
+
+  if (autoSaveTimer) clearTimeout(autoSaveTimer);
+  const status = document.getElementById('saveStatus');
+  status.textContent = '⏳ Sauvegarde automatique...';
+  autoSaveTimer = setTimeout(() => {
+    saveChanges(true);
+  }, 2000);
 }
 
-function updateSaveStatus() {
+function updateSaveStatus(silent) {
   const status = document.getElementById('saveStatus');
   const count = modifiedIds.size;
   if (count === 0) {
-    status.textContent = '';
-    status.className = 'save-status';
+    if (!silent) { status.textContent = ''; status.className = 'save-status'; }
   } else {
     status.textContent = count + ' modification(s) non enregistrée(s)';
     status.className = 'save-status unsaved';
   }
 }
 
-async function saveChanges() {
+async function saveChanges(silent) {
   const sp = document.getElementById('spinner3');
   const btn = document.getElementById('btnSave');
   const alert3 = document.getElementById('alert3');
@@ -937,12 +1039,16 @@ async function saveChanges() {
   const alert3msg = document.getElementById('alert3-msg');
   const alert3okmsg = document.getElementById('alert3-ok-msg');
 
-  alert3.classList.remove('show');
-  alert3ok.classList.remove('show');
-  sp.classList.add('show');
-  btn.disabled = true;
+  if (!silent) {
+    alert3.classList.remove('show');
+    alert3ok.classList.remove('show');
+    sp.classList.add('show');
+    btn.disabled = true;
+  }
 
   const ids = Array.from(modifiedIds);
+  if (!ids.length) { if (!silent) { sp.classList.remove('show'); btn.disabled = false; } return; }
+
   let success = 0;
   let errors = [];
 
@@ -985,19 +1091,31 @@ async function saveChanges() {
   }
 
   modifiedIds = new Set();
-  updateSaveStatus();
+  updateSaveStatus(silent);
 
-  if (errors.length === 0) {
-    alert3okmsg.textContent = success + ' modification(s) enregistrée(s) avec succès.';
-    alert3ok.classList.add('show');
-    document.getElementById('btn3Next').disabled = false;
-  } else {
-    alert3msg.textContent = success + ' enregistrée(s), ' + errors.length + ' erreur(s).';
-    alert3.classList.add('show');
+  const status = document.getElementById('saveStatus');
+  if (silent && success > 0) {
+    status.textContent = '✓ Sauvegardé il y a quelques secondes';
+    status.className = 'save-status saved';
   }
 
-  sp.classList.remove('show');
-  btn.disabled = false;
+  if (errors.length === 0) {
+    if (!silent) {
+      alert3okmsg.textContent = success + ' modification(s) enregistrée(s) avec succès.';
+      alert3ok.classList.add('show');
+    }
+    document.getElementById('btn3Next').disabled = false;
+  } else {
+    if (!silent) {
+      alert3msg.textContent = success + ' enregistrée(s), ' + errors.length + ' erreur(s).';
+      alert3.classList.add('show');
+    }
+  }
+
+  if (!silent) {
+    sp.classList.remove('show');
+    btn.disabled = false;
+  }
 }
 
 function updateSummary() {
@@ -1076,12 +1194,152 @@ async function generateFile() {
       alert4ok.classList.add('show');
       document.getElementById('btnToMail').style.display = 'inline-flex';
       document.getElementById('btnNewReport4').style.display = 'inline-flex';
+      const pdfBtn = document.getElementById('btnPDF');
+      if (pdfBtn) pdfBtn.style.display = 'inline-flex';
     }
   } catch(e) {
     document.getElementById('alert4-msg').textContent = 'Erreur réseau : ' + e.message;
     alert4.classList.add('show');
   }
   sp.classList.remove('show'); btn.disabled = false;
+}
+
+async function generatePDF() {
+  const sp = document.getElementById('spinnerPdf');
+  const btn = document.getElementById('btnPDF');
+  const alert4 = document.getElementById('alert4');
+  const alert4ok = document.getElementById('alert4-ok');
+  alert4.classList.remove('show'); alert4ok.classList.remove('show');
+  if (sp) sp.classList.add('show'); if (btn) btn.disabled = true;
+
+  try {
+    const res = await fetch('/api/generate-pdf', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mode: currentMode,
+        dateDebut: document.getElementById('dateDebut').value,
+        dateFin: document.getElementById('dateFin').value
+      })
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      document.getElementById('alert4-msg').textContent = data.error || 'Erreur inconnue';
+      alert4.classList.add('show');
+    } else {
+      generatedFileName = decodeURIComponent(res.headers.get('X-File-Name') || 'rapport.pdf');
+      const count = res.headers.get('X-Count') || '?';
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = generatedFileName;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+
+      document.getElementById('alert4-ok-msg').textContent = 'PDF généré avec ' + count + ' courrier(s) — téléchargement démarré.';
+      alert4ok.classList.add('show');
+      document.getElementById('btnToMail').style.display = 'inline-flex';
+      document.getElementById('btnNewReport4').style.display = 'inline-flex';
+    }
+  } catch(e) {
+    document.getElementById('alert4-msg').textContent = 'Erreur réseau : ' + e.message;
+    alert4.classList.add('show');
+  }
+  if (sp) sp.classList.remove('show'); if (btn) btn.disabled = false;
+}
+
+async function renderDashboard() {
+  try {
+    const res = await fetch('/api/dashboard');
+    const data = await res.json();
+    if (!data.success || !data.data) return;
+
+    const dash = data.data;
+    const hasData = dash.byEtat && dash.byEtat.length > 0;
+
+    document.getElementById('dashboardAlert').style.display = hasData ? 'none' : 'flex';
+    document.getElementById('dashboardContent').style.display = hasData ? 'block' : 'none';
+    if (!hasData) return;
+
+    if (dashboardCharts.etat) dashboardCharts.etat.destroy();
+    if (dashboardCharts.exp) dashboardCharts.exp.destroy();
+    if (dashboardCharts.evol) dashboardCharts.evol.destroy();
+
+    const colors = ['#b91c1c', '#d97706', '#0e7a4e', '#1a3f7a', '#6b7a99', '#c8960c'];
+
+    dashboardCharts.etat = new Chart(document.getElementById('chartEtat'), {
+      type: 'bar', data: {
+        labels: dash.byEtat.map(r => r.etat),
+        datasets: [{ label: 'Courriers', data: dash.byEtat.map(r => r.count), backgroundColor: colors.slice(0, dash.byEtat.length) }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+    });
+
+    dashboardCharts.exp = new Chart(document.getElementById('chartExpediteurs'), {
+      type: 'bar', data: {
+        labels: dash.topExpediteurs.map(r => r.expediteur.length > 20 ? r.expediteur.slice(0, 20) + '...' : r.expediteur),
+        datasets: [{ label: 'Courriers', data: dash.topExpediteurs.map(r => r.count), backgroundColor: '#1a3f7a' }]
+      },
+      options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+        scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+    });
+
+    dashboardCharts.evol = new Chart(document.getElementById('chartEvolution'), {
+      type: 'line', data: {
+        labels: dash.weeklyEvolution.map(r => r.semaine ? r.semaine.slice(5) : ''),
+        datasets: [{ label: 'Courriers', data: dash.weeklyEvolution.map(r => r.count), borderColor: '#0e7a4e', backgroundColor: 'rgba(14,122,78,0.1)', fill: true, tension: 0.3 }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+    });
+  } catch(e) { /* silent */ }
+}
+
+async function loadSessions() {
+  try {
+    const res = await fetch('/api/sessions');
+    const data = await res.json();
+    const list = document.getElementById('sessionList');
+    if (!data.success || !data.sessions || !data.sessions.length) {
+      list.innerHTML = '<p style="font-size:13px;color:var(--muted)">Aucun import précédent.</p>';
+      return;
+    }
+    list.innerHTML = data.sessions.map(s => {
+      const d = new Date(s.created_at);
+      const dateStr = d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      return '<div class="session-item" onclick="loadSession(\'' + s.session_id + '\')">' +
+        '<span class="s-date">' + dateStr + '</span>' +
+        '<span class="s-file">' + esc(s.file_name || 'Fichier') + '</span>' +
+        '<span class="s-count">' + (s.courrier_count || '?') + ' courrier(s)</span>' +
+        '<button class="btn btn-outline s-btn">Reprendre</button>' +
+        '</div>';
+    }).join('');
+  } catch(e) { /* silent */ }
+}
+
+async function loadSession(sid) {
+  try {
+    const res = await fetch('/api/sessions/load', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: sid })
+    });
+    const data = await res.json();
+    if (!res.ok || data.error) { alert(data.error || 'Erreur'); return; }
+
+    courriers = data.rows;
+    dataStored = true;
+    modifiedIds = new Set();
+    sessionId = sid;
+
+    document.querySelectorAll('.mode-card').forEach(c => c.classList.add('disabled'));
+    document.getElementById('dateDebut').disabled = true;
+    document.getElementById('dateFin').disabled = true;
+
+    renderEditableTable();
+  } catch(e) { alert('Erreur réseau : ' + e.message); }
 }
 
 async function sendMail() {
@@ -1121,7 +1379,7 @@ async function sendMail() {
 }
 
 function resetAll() {
-  csvText = '';
+  sessionId = '';
   courriers = [];
   totalLines = 0;
   currentMode = 'all';
@@ -1134,12 +1392,15 @@ function resetAll() {
   document.getElementById('fileInput').value = '';
   document.getElementById('btn1Next').disabled = true;
   document.getElementById('btnToMail').style.display = 'none';
+  document.getElementById('btnNewReport4').style.display = 'none';
   document.getElementById('mailSuccess').style.display = 'none';
   document.getElementById('btnSendMail').style.display = 'inline-flex';
   document.getElementById('editableTableWrap').innerHTML = '';
   document.getElementById('btn3Next').disabled = true;
   document.getElementById('saveStatus').textContent = '';
   document.getElementById('saveStatus').className = 'save-status';
+  const pdfBtn = document.getElementById('btnPDF');
+  if (pdfBtn) pdfBtn.style.display = 'none';
 
   document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('disabled'));
   document.getElementById('dateDebut').disabled = false;
@@ -1168,6 +1429,8 @@ function newReport() {
   document.getElementById('btn3Next').disabled = true;
   document.getElementById('saveStatus').textContent = '';
   document.getElementById('saveStatus').className = 'save-status';
+  const pdfBtn = document.getElementById('btnPDF');
+  if (pdfBtn) pdfBtn.style.display = 'none';
 
   document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('disabled'));
   document.getElementById('dateDebut').disabled = false;
