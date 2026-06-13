@@ -1235,13 +1235,17 @@ async function loadSessions() {
     list.innerHTML = data.sessions.map(s => {
       const d = new Date(s.created_at);
       const dateStr = d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-      return '<div class="session-item" onclick="loadSession(\'' + s.session_id + '\')">' +
+      return '<div class="session-item" data-sid="' + esc(s.session_id) + '">' +
         '<span class="s-date">' + dateStr + '</span>' +
         '<span class="s-file">' + esc(s.file_name || 'Fichier') + '</span>' +
         '<span class="s-count">' + (s.courrier_count || '?') + ' courrier(s)</span>' +
         '<button class="btn btn-outline s-btn">Reprendre</button>' +
         '</div>';
     }).join('');
+    list.onclick = function(e) {
+      const item = e.target.closest('.session-item');
+      if (item) loadSession(item.dataset.sid);
+    };
   } catch(e) { /* silent */ }
 }
 
