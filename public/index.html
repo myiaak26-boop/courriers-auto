@@ -386,15 +386,6 @@ td.modified { background: #fef3c7 !important; outline: 2px solid var(--accent); 
 }
 .tag-remove:hover { opacity: 1; }
 
-.urgency-dot {
-  display: inline-block; width: 10px; height: 10px;
-  border-radius: 50%; margin-right: 5px; vertical-align: middle;
-}
-.urgency-red { background: #b91c1c; }
-.urgency-orange { background: #d97706; }
-.urgency-green { background: #0e7a4e; }
-.urgency-gray { background: #9ca3af; }
-
 .dense td { padding: 6px 10px; font-size: 11px; }
 .dense th { padding: 7px 10px; font-size: 11px; }
 .comfort td { padding: 9px 12px; }
@@ -897,14 +888,6 @@ async function storeData() {
   }
 }
 
-function urgencyLevel(text) {
-  const t = (text || '').toLowerCase().trim();
-  if (/urgent|eleve|haute|critique|tres/.test(t)) return 'red';
-  if (/moyen|normal/.test(t)) return 'orange';
-  if (/faible|basse/.test(t)) return 'green';
-  return 'gray';
-}
-
 function renderEditableTable() {
   const wrap = document.getElementById('editableTableWrap');
   if (!courriers.length) {
@@ -923,14 +906,13 @@ function renderEditableTable() {
 
   for (const c of courriers) {
     const dateStr = c.date_arrivee ? c.date_arrivee.toString().slice(0, 10) : '';
-    const urgLevel = urgencyLevel(c.niveau_urgence);
     html += '<tr data-id="' + c.id + '">';
     html += '<td>' + esc(c.numero) + '</td>';
     html += '<td>' + esc(c.expediteur) + '</td>';
     html += '<td contenteditable="true" data-field="destinataire" data-id="' + c.id + '" oninput="onCellChange(this)">' + esc(c.destinataire || 'Premier Ministre') + '</td>';
     html += '<td>' + esc(c.objet) + '</td>';
     html += '<td>' + esc(dateStr) + '</td>';
-    html += '<td contenteditable="true" data-field="niveau_urgence" data-id="' + c.id + '" oninput="onCellChange(this)"><span class="urgency-dot urgency-' + urgLevel + '"></span>' + esc(c.niveau_urgence || '') + '</td>';
+    html += '<td contenteditable="true" data-field="niveau_urgence" data-id="' + c.id + '" oninput="onCellChange(this)">' + esc(c.niveau_urgence || '') + '</td>';
     html += '<td>' + esc(c.etat) + '</td>';
     html += '<td>' + esc(c.position) + '</td>';
     html += '</tr>';
