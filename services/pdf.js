@@ -50,6 +50,7 @@ function generatePDF(rows, mode, dateDebut, dateFin) {
     doc.rect(x, top, totalW, baseRowH).fill(navy);
     doc.font('Helvetica-Bold').fontSize(fontSize).fillColor(white);
     headers.forEach((h, i) => {
+      doc.rect(x, top, colW[i], baseRowH).stroke('#ffffff');
       doc.text(h, x + 2, top + (baseRowH - fontSize) / 2, {
         width: colW[i] - 4, align: i === 0 ? 'center' : 'left'
       });
@@ -81,6 +82,7 @@ function generatePDF(rows, mode, dateDebut, dateFin) {
 
     vals.forEach((v, i) => {
       doc.rect(x, top, colW[i], rowH).fill(bg);
+      doc.rect(x, top, colW[i], rowH).stroke('#a0b4d0');
       doc.fillColor(textColor);
       doc.text(String(v || ''), x + 2, top + 2, {
         width: colW[i] - 4, align: i < 2 ? 'center' : 'left', fontSize
@@ -107,6 +109,7 @@ function generatePDF(rows, mode, dateDebut, dateFin) {
   const totalW = colW.reduce((a, b) => a + b, 0);
   if (top + baseRowH > doc.page.height - 40) { doc.addPage(); top = 40; }
   doc.rect(x, top, totalW, baseRowH).fill(blue);
+  doc.rect(x, top, totalW, baseRowH).stroke('#ffffff');
   doc.font('Helvetica-Bold').fontSize(8).fillColor(white);
   doc.text(`TOTAL : ${rows.length} COURRIER(S)`, x + 4, top + (baseRowH - 8) / 2, { width: totalW - 8 });
 
