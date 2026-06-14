@@ -22,7 +22,7 @@ async function getAllCourriers() {
 }
 
 async function updateCourrier(id, fields) {
-  const idx = courriers.findIndex(c => c.id === id);
+  const idx = courriers.findIndex(c => c.id === Number(id));
   if (idx === -1) return null;
   if (fields.etat != null) courriers[idx].etat = fields.etat;
   if (fields.position != null) courriers[idx].position = fields.position;
