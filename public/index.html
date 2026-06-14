@@ -133,7 +133,7 @@
       <button class="btn btn-outline" onclick="goToStep(1)">← Retour</button>
       <button class="btn btn-primary" id="btnStore" onclick="storeData()">
         <span id="spinner2" class="spinner"></span>
-        Stocker &amp; Modifier →
+        Continuer →
       </button>
     </div>
   </div>
@@ -150,19 +150,12 @@
 
     <div id="editableTableWrap"></div>
 
-    <div class="btn-row">
-      <button class="btn btn-success" id="btnSave" onclick="saveChanges()">
-        <span id="spinner3" class="spinner"></span>
-        Enregistrer les modifications
-      </button>
-      <span id="saveStatus" class="save-status"></span>
-    </div>
+    <div id="saveStatus" class="save-status"></div>
 
     <div class="btn-row" style="margin-top:12px">
       <button class="btn btn-primary" id="btn3Next" onclick="goToStep(4)" disabled>
         Continuer →
       </button>
-      <button class="btn btn-outline" onclick="newReport()" style="margin-left:auto">🔄 Nouveau rapport</button>
     </div>
   </div>
 
@@ -196,7 +189,6 @@
       <button class="btn btn-success" id="btnToMail" onclick="goToStep(5)" style="display:none">
         Envoyer par mail →
       </button>
-      <button class="btn btn-outline" onclick="newReport()" style="display:none" id="btnNewReport4">🔄 Nouveau rapport</button>
     </div>
   </div>
 
@@ -233,7 +225,6 @@
         <span id="spinner5" class="spinner"></span>
         📧 Envoyer le mail
       </button>
-      <button class="btn btn-outline" onclick="newReport()">🔄 Nouveau rapport</button>
     </div>
 
     <div id="mailSuccess" style="display:none;margin-top:20px" class="result-box">

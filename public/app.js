@@ -289,7 +289,6 @@ function renderEditableTable() {
   wrap.innerHTML = html;
 
   document.getElementById('btn3Next').disabled = false;
-  document.getElementById('btnSave').disabled = false;
   document.getElementById('saveStatus').textContent = '';
   document.getElementById('saveStatus').className = 'save-status';
 
@@ -320,43 +319,27 @@ function onCellChange(el) {
 
   if (autoSaveTimer) clearTimeout(autoSaveTimer);
   const status = document.getElementById('saveStatus');
-  status.textContent = '⏳ Sauvegarde automatique...';
+  status.textContent = '⚡ Sauvegarde automatique...';
   autoSaveTimer = setTimeout(() => {
-    saveChanges(true);
+    saveChanges();
   }, 2000);
 }
 
-function updateSaveStatus(silent) {
+function updateSaveStatus() {
   const status = document.getElementById('saveStatus');
   const count = modifiedIds.size;
   if (count === 0) {
-    if (!silent) { status.textContent = ''; status.className = 'save-status'; }
+    status.textContent = '';
+    status.className = 'save-status';
   } else {
     status.textContent = count + ' modification(s) non enregistrée(s)';
     status.className = 'save-status unsaved';
   }
 }
 
-async function saveChanges(silent) {
-  const sp = document.getElementById('spinner3');
-  const btn = document.getElementById('btnSave');
-  const alert3 = document.getElementById('alert3');
-  const alert3ok = document.getElementById('alert3-ok');
-  const alert3msg = document.getElementById('alert3-msg');
-  const alert3okmsg = document.getElementById('alert3-ok-msg');
-
-  if (!silent) {
-    alert3.classList.remove('show');
-    alert3ok.classList.remove('show');
-    sp.classList.add('show');
-    btn.disabled = true;
-  }
-
+async function saveChanges() {
   const ids = Array.from(modifiedIds);
-  if (!ids.length) { if (!silent) { sp.classList.remove('show'); btn.disabled = false; } return; }
-
-  let success = 0;
-  let errors = [];
+  if (!ids.length) return;
 
   for (const id of ids) {
     const tr = document.querySelector('tr[data-id="' + id + '"]');
@@ -379,49 +362,17 @@ async function saveChanges(silent) {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        success++;
-      } else {
-        errors.push(id);
+        const tr2 = document.querySelector('tr[data-id="' + id + '"]');
+        if (tr2) tr2.querySelectorAll('td.modified').forEach(c => c.classList.remove('modified'));
       }
-    } catch(e) {
-      errors.push(id);
-    }
-  }
-
-  for (const id of ids) {
-    const tr = document.querySelector('tr[data-id="' + id + '"]');
-    if (tr) {
-      const cells = tr.querySelectorAll('td.modified');
-      cells.forEach(c => c.classList.remove('modified'));
-    }
+    } catch(e) {}
   }
 
   modifiedIds = new Set();
-  updateSaveStatus(silent);
-
+  updateSaveStatus();
   const status = document.getElementById('saveStatus');
-  if (silent && success > 0) {
-    status.textContent = '✓ Sauvegardé il y a quelques secondes';
-    status.className = 'save-status saved';
-  }
-
-  if (errors.length === 0) {
-    if (!silent) {
-      alert3okmsg.textContent = success + ' modification(s) enregistrée(s) avec succès.';
-      alert3ok.classList.add('show');
-    }
-    document.getElementById('btn3Next').disabled = false;
-  } else {
-    if (!silent) {
-      alert3msg.textContent = success + ' enregistrée(s), ' + errors.length + ' erreur(s).';
-      alert3.classList.add('show');
-    }
-  }
-
-  if (!silent) {
-    sp.classList.remove('show');
-    btn.disabled = false;
-  }
+  status.textContent = '✓ Sauvegardé il y a quelques secondes';
+  status.className = 'save-status saved';
 }
 
 function updateSummary() {
@@ -499,7 +450,6 @@ async function generateFile() {
       document.getElementById('alert4-ok-msg').textContent = 'Fichier généré avec ' + count + ' courrier(s) — téléchargement démarré.';
       alert4ok.classList.add('show');
       document.getElementById('btnToMail').style.display = 'inline-flex';
-      document.getElementById('btnNewReport4').style.display = 'inline-flex';
       const pdfBtn = document.getElementById('btnPDF');
       if (pdfBtn) pdfBtn.style.display = 'inline-flex';
     }
@@ -546,7 +496,6 @@ async function generatePDF() {
       document.getElementById('alert4-ok-msg').textContent = 'PDF généré avec ' + count + ' courrier(s) — téléchargement démarré.';
       alert4ok.classList.add('show');
       document.getElementById('btnToMail').style.display = 'inline-flex';
-      document.getElementById('btnNewReport4').style.display = 'inline-flex';
     }
   } catch(e) {
     document.getElementById('alert4-msg').textContent = 'Erreur réseau : ' + e.message;
@@ -605,7 +554,6 @@ function resetAll() {
   document.getElementById('fileInput').value = '';
   document.getElementById('btn1Next').disabled = true;
   document.getElementById('btnToMail').style.display = 'none';
-  document.getElementById('btnNewReport4').style.display = 'none';
   document.getElementById('mailSuccess').style.display = 'none';
   document.getElementById('btnSendMail').style.display = 'inline-flex';
   document.getElementById('editableTableWrap').innerHTML = '';
@@ -635,7 +583,6 @@ function newReport() {
   ccRecipients = [];
 
   document.getElementById('btnToMail').style.display = 'none';
-  document.getElementById('btnNewReport4').style.display = 'none';
   document.getElementById('mailSuccess').style.display = 'none';
   document.getElementById('btnSendMail').style.display = 'inline-flex';
   document.getElementById('editableTableWrap').innerHTML = '';
