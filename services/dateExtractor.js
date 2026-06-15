@@ -230,7 +230,15 @@ ${promptText}`;
   return objetList.map(() => ({ date: null, destinataire: null }));
 }
 
-async function autoFillFieldsForCourriers(courriers) {
+async function autoFillFieldsForCourriers(courriers, requestedFields = ['urgence', 'destinataire']) {
+  const usage = requestedFields || ['urgence', 'destinataire'];
+  const needsUrgence = usage.includes('urgence');
+  const needsDestinataire = usage.includes('destinataire');
+
+  if (!needsUrgence && !needsDestinataire) {
+    return courriers.map(c => ({ id: c.id, niveau_urgence: null, destinataire: null }));
+  }
+
   const objetList = courriers.map(c => c.objet || '');
   const fields = await extractFieldsFromObjetList(objetList);
 
@@ -239,8 +247,8 @@ async function autoFillFieldsForCourriers(courriers) {
     const days = daysUntil(f.date);
     return {
       id: c.id,
-      niveau_urgence: getUrgencyLevel(days),
-      destinataire: f.destinataire || null,
+      niveau_urgence: needsUrgence ? getUrgencyLevel(days) : null,
+      destinataire: (needsDestinataire && f.destinataire) ? f.destinataire : null,
       extractedDate: f.date,
       days
     };

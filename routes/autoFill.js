@@ -10,7 +10,8 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Aucun courrier en base.' });
     }
 
-    const updates = await autoFillFieldsForCourriers(courriers);
+    const fields = req.body.fields || ['urgence', 'destinataire'];
+    const updates = await autoFillFieldsForCourriers(courriers, fields);
 
     let urgenceCount = 0;
     let destCount = 0;
@@ -19,12 +20,12 @@ router.post('/', async (req, res) => {
       const payload = {};
       let changed = false;
 
-      if (u.niveau_urgence) {
+      if (fields.includes('urgence') && u.niveau_urgence) {
         payload.niveau_urgence = u.niveau_urgence;
         changed = true;
       }
 
-      if (u.destinataire) {
+      if (fields.includes('destinataire') && u.destinataire) {
         payload.destinataire = u.destinataire;
         changed = true;
       }
@@ -34,8 +35,8 @@ router.post('/', async (req, res) => {
       const result = await updateCourrier(u.id, payload);
       if (!result) continue;
 
-      if (u.niveau_urgence) urgenceCount++;
-      if (u.destinataire) destCount++;
+      if (fields.includes('urgence') && u.niveau_urgence) urgenceCount++;
+      if (fields.includes('destinataire') && u.destinataire) destCount++;
     }
 
     const updated = await getAllCourriers();

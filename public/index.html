@@ -153,10 +153,16 @@
     <div id="saveStatus" class="save-status"></div>
 
     <div id="autoFillWrap" style="display:none;margin-top:16px">
-      <button class="btn btn-outline" id="btnAutoFill" onclick="autoFillUrgency()" style="padding:12px 20px;font-size:14px">
-        <span id="spinnerAf" class="spinner"></span>
-        🔮 Auto-remplir (IA)
-      </button>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-outline" id="btnAutoFillUrgence" onclick="autoFillUrgence()" style="padding:12px 20px;font-size:14px">
+          <span id="spinnerAfU" class="spinner"></span>
+          🔮 Urgence (IA)
+        </button>
+        <button class="btn btn-outline" id="btnAutoFillDest" onclick="autoFillDestinataire()" style="padding:12px 20px;font-size:14px">
+          <span id="spinnerAfD" class="spinner"></span>
+          🔮 Destinataire (IA)
+        </button>
+      </div>
       <span id="autoFillInfo" style="font-size:12px;color:var(--muted);margin-left:10px"></span>
       <div id="alertAf" class="alert alert-success" style="margin-top:10px">
         <span id="alertAf-msg"></span>

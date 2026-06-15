@@ -378,9 +378,12 @@ async function saveChanges() {
   status.className = 'save-status saved';
 }
 
-async function autoFillUrgency() {
-  const btn = document.getElementById('btnAutoFill');
-  const sp = document.getElementById('spinnerAf');
+async function autoFillFields(fields, label) {
+  const isUrgence = fields.includes('urgence');
+  const btnId = isUrgence ? 'btnAutoFillUrgence' : 'btnAutoFillDest';
+  const spId = isUrgence ? 'spinnerAfU' : 'spinnerAfD';
+  const btn = document.getElementById(btnId);
+  const sp = document.getElementById(spId);
   const alertOk = document.getElementById('alertAf');
   const alertErr = document.getElementById('alertAfErr');
   const info = document.getElementById('autoFillInfo');
@@ -389,7 +392,7 @@ async function autoFillUrgency() {
   alertErr.classList.remove('show');
   sp.classList.add('show');
   btn.disabled = true;
-  info.textContent = 'Analyse des objets par IA...';
+  info.textContent = 'Analyse ' + label + ' par IA...';
 
   try {
     if (autoSaveTimer) {
@@ -399,7 +402,8 @@ async function autoFillUrgency() {
 
     const res = await fetch('/api/auto-fill', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fields })
     });
 
     const data = await res.json();
@@ -434,6 +438,9 @@ async function autoFillUrgency() {
   btn.disabled = false;
   info.textContent = '';
 }
+
+function autoFillUrgence() { autoFillFields(['urgence'], 'urgences'); }
+function autoFillDestinataire() { autoFillFields(['destinataire'], 'destinataires'); }
 
 function updateSummary() {
   const labels = { all: 'Situation journalière complète', assigne_non_traite: 'Assignés non traités', en_retard: 'En retard de traitement' };
