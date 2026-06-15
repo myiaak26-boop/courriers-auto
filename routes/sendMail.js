@@ -30,7 +30,10 @@ router.post('/', async (req, res) => {
     const result = generateXLS(rows, rows, mode || 'all', dateDebut || '', dateFin || '');
     if (!result) return res.status(400).json({ error: 'Aucun courrier trouvé pour les critères sélectionnés.' });
 
-    const { subject, text, html } = buildMailContent(mode || 'all', dateDebut || '', dateFin || '');
+    const mailContent = buildMailContent(mode || 'all', dateDebut || '', dateFin || '');
+    const subject = req.body.customSubject || mailContent.subject;
+    const text = req.body.customText || mailContent.text;
+    const html = mailContent.html;
     const to = mailTo || process.env.MAIL_TO || 'aboubacar.bangoura@primature.gov.gn';
     const cc = Array.isArray(mailCc) && mailCc.length ? mailCc : undefined;
     const fromAddr = process.env.MAIL_FROM || 'amadoukeita5263@gmail.com';

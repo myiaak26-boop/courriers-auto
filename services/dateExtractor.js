@@ -13,24 +13,42 @@ function daysUntil(dateStr) {
 
 function getUrgencyLevel(days) {
   if (days === null || days === undefined) return 'Normal';
-  if (days < 1) return 'Normal';
+  if (days < 1) return 'Expiré';
   if (days <= 5) return '1';
   if (days <= 10) return '2';
   return 'Normal';
 }
 
-async function extractDatesFromObjetList(objetList) {
+async function extractFieldsFromObjetList(objetList) {
   if (!NVIDIA_API_KEY) {
-    console.warn('NVIDIA_API_KEY not set, skipping AI date extraction');
-    return objetList.map(() => null);
+    console.warn('NVIDIA_API_KEY not set, skipping AI extraction');
+    return objetList.map(() => ({ date: null, destinataire: null }));
   }
 
   const items = objetList.map((o, i) => `${i}. ${o || ''}`);
   const promptText = items.join('\n');
 
-  const systemMsg = 'Tu es un extracteur de dates en français. Tu réponds UNIQUEMENT avec un tableau JSON valide, rien d\'autre.';
-  const userMsg = `Pour chaque texte ci-dessous, extrais la date de début d'événement ou de période au format YYYY-MM-DD. Si une période (ex: "du 23 au 28 juin 2026"), prends la date de début (23 juin 2026 → 2026-06-23). Si aucune date, mets null. Retourne UNIQUEMENT un tableau JSON valide, ex: ["2026-06-19", null, "2026-06-23"]:
+  const systemMsg = 'Tu es un assistant specialise dans l\'analyse de courriers administratifs francais. Tu reponds UNIQUEMENT avec un tableau JSON valide, rien d\'autre.';
 
+  const userMsg = `Pour chaque texte ci-dessous, extrais deux informations :
+
+1. "date" : la date de debut de l'evenement ou de la periode au format YYYY-MM-DD.
+   - Ex: "19 juin 2026" → "2026-06-19"
+   - Ex: "du 23 au 28 juin 2026" → prendre la date de debut → "2026-06-23"
+   - Ne considere PAS une simple annee seule (ex: "2026", "plan 2025") comme une date.
+   - Si aucune date valide → null
+
+2. "destinataire" : le destinataire de la lettre s'il est mentionne apres "adressee a/au/aux".
+   - Prefixe toujours par "Copie/"
+   - Si contient "adressee a Madame/Monsieur le/la Ministre de X" → "Copie/Ministere de X"
+   - Si contient "adressee aux Ordonnateurs du Budget de l'Etat" → "Copie/Ordonnateurs du Budget de l'Etat"
+   - Si contient "adressee au Representant autorise de KPS" → "Copie/Representant autorise de KPS"
+   - Si aucun destinataire explicite → null (ne pas inventer)
+
+Retourne UNIQUEMENT un tableau JSON valide, ex:
+[{"date": "2026-06-19", "destinataire": "Copie/Representant autorise de KPS"}, {"date": null, "destinataire": null}]
+
+Textes :
 ${promptText}`;
 
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -48,7 +66,7 @@ ${promptText}`;
             { role: 'user', content: userMsg }
           ],
           temperature: 0,
-          max_tokens: 2000
+          max_tokens: 3000
         })
       });
 
@@ -59,7 +77,7 @@ ${promptText}`;
           await new Promise(r => setTimeout(r, 2000));
           continue;
         }
-        return objetList.map(() => null);
+        return objetList.map(() => ({ date: null, destinataire: null }));
       }
 
       const data = await response.json();
@@ -68,38 +86,43 @@ ${promptText}`;
       const jsonMatch = content.match(/\[[\s\S]*?\]/);
       if (!jsonMatch) {
         console.error('No JSON array found in response:', content);
-        return objetList.map(() => null);
+        return objetList.map(() => ({ date: null, destinataire: null }));
       }
 
-      const dates = JSON.parse(jsonMatch[0]);
-      if (!Array.isArray(dates)) return objetList.map(() => null);
-      return dates;
+      const fields = JSON.parse(jsonMatch[0]);
+      if (!Array.isArray(fields)) return objetList.map(() => ({ date: null, destinataire: null }));
+      return fields.map(f => ({
+        date: f.date || null,
+        destinataire: f.destinataire || null
+      }));
     } catch (err) {
       console.error('NVIDIA API call failed:', err.message);
       if (attempt === 0) {
         await new Promise(r => setTimeout(r, 1000));
         continue;
       }
-      return objetList.map(() => null);
+      return objetList.map(() => ({ date: null, destinataire: null }));
     }
   }
 
-  return objetList.map(() => null);
+  return objetList.map(() => ({ date: null, destinataire: null }));
 }
 
-async function autoFillUrgencyForCourriers(courriers) {
+async function autoFillFieldsForCourriers(courriers) {
   const objetList = courriers.map(c => c.objet || '');
-  const dates = await extractDatesFromObjetList(objetList);
+  const fields = await extractFieldsFromObjetList(objetList);
 
   return courriers.map((c, i) => {
-    const days = daysUntil(dates[i]);
+    const f = fields[i] || {};
+    const days = daysUntil(f.date);
     return {
       id: c.id,
       niveau_urgence: getUrgencyLevel(days),
-      extractedDate: dates[i],
+      destinataire: f.destinataire || null,
+      extractedDate: f.date,
       days
     };
   });
 }
 
-module.exports = { autoFillUrgencyForCourriers };
+module.exports = { autoFillFieldsForCourriers };

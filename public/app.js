@@ -60,8 +60,8 @@ function goToStep(n) {
     updateMailSubjectPreview();
   }
   if (n === 5) {
-    updateMailSubjectPreview();
     renderCcTags();
+    loadMailPreview();
   }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -416,8 +416,11 @@ async function autoFillUrgency() {
     courriers = data.rows;
     modifiedIds = new Set();
 
+    const parts = [];
+    if (data.urgenceCount) parts.push(data.urgenceCount + ' urgence(s)');
+    if (data.destCount) parts.push(data.destCount + ' destinataire(s)');
     document.getElementById('alertAf-msg').textContent =
-      data.modifiedCount + ' courrier(s) mis à jour sur ' + data.total;
+      '✓ ' + parts.join(' + ') + ' mis à jour sur ' + data.total + ' courrier(s)';
     alertOk.classList.add('show');
 
     renderEditableTable();
@@ -561,6 +564,27 @@ async function generatePDF() {
   if (sp) sp.classList.remove('show'); if (btn) btn.disabled = false;
 }
 
+async function loadMailPreview() {
+  try {
+    const res = await fetch('/api/mail-preview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mode: currentMode,
+        dateDebut: document.getElementById('dateDebut').value,
+        dateFin: document.getElementById('dateFin').value
+      })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      document.getElementById('mailSubject').value = data.subject || '';
+      document.getElementById('mailBody').value = data.text || '';
+    }
+  } catch (e) {
+    console.error('Erreur chargement preview mail:', e.message);
+  }
+}
+
 async function sendMail() {
   const sp = document.getElementById('spinner5');
   const btn = document.getElementById('btnSendMail');
@@ -578,7 +602,9 @@ async function sendMail() {
         dateDebut: document.getElementById('dateDebut').value,
         dateFin: document.getElementById('dateFin').value,
         mailTo: document.getElementById('mailTo').value,
-        mailCc: ccRecipients
+        mailCc: ccRecipients,
+        customSubject: document.getElementById('mailSubject').value,
+        customText: document.getElementById('mailBody').value
       })
     });
     const data = await res.json();

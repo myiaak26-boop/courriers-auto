@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { getAllCourriers, updateCourrier } = require('../services/db');
-const { autoFillUrgencyForCourriers } = require('../services/dateExtractor');
+const { autoFillFieldsForCourriers } = require('../services/dateExtractor');
 
 router.post('/', async (req, res) => {
   try {
@@ -10,18 +10,40 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Aucun courrier en base.' });
     }
 
-    const updates = await autoFillUrgencyForCourriers(courriers);
+    const updates = await autoFillFieldsForCourriers(courriers);
 
-    let modifiedCount = 0;
+    let urgenceCount = 0;
+    let destCount = 0;
+
     for (const u of updates) {
-      const result = await updateCourrier(u.id, { niveau_urgence: u.niveau_urgence });
-      if (result) modifiedCount++;
+      const payload = {};
+      let changed = false;
+
+      if (u.niveau_urgence) {
+        payload.niveau_urgence = u.niveau_urgence;
+        changed = true;
+      }
+
+      if (u.destinataire) {
+        payload.destinataire = u.destinataire;
+        changed = true;
+      }
+
+      if (!changed) continue;
+
+      const result = await updateCourrier(u.id, payload);
+      if (!result) continue;
+
+      if (u.niveau_urgence) urgenceCount++;
+      if (u.destinataire) destCount++;
     }
 
     const updated = await getAllCourriers();
     res.json({
       success: true,
-      modifiedCount,
+      urgenceCount,
+      destCount,
+      modifiedCount: urgenceCount + destCount,
       total: courriers.length,
       rows: updated
     });

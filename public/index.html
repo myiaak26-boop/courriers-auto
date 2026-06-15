@@ -155,7 +155,7 @@
     <div id="autoFillWrap" style="display:none;margin-top:16px">
       <button class="btn btn-outline" id="btnAutoFill" onclick="autoFillUrgency()" style="padding:12px 20px;font-size:14px">
         <span id="spinnerAf" class="spinner"></span>
-        🔮 Auto-remplir l'urgence (IA)
+        🔮 Auto-remplir (IA)
       </button>
       <span id="autoFillInfo" style="font-size:12px;color:var(--muted);margin-left:10px"></span>
       <div id="alertAf" class="alert alert-success" style="margin-top:10px">
@@ -228,12 +228,17 @@
       <p style="font-size:12px;color:var(--muted);margin-top:6px">Appuyez sur Entrée pour ajouter un destinataire en copie</p>
     </div>
 
-    <div style="background:var(--bg);border-radius:14px;padding:16px;margin-bottom:20px;font-size:13px;color:var(--muted)">
-      <strong style="color:var(--navy)">Sujet du mail :</strong><br>
-      <span id="mailSubjectPreview" style="font-style:italic"></span>
+    <div class="mail-input-wrap">
+      <label>Sujet du mail</label>
+      <input type="text" id="mailSubject" style="width:100%;border:2px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--navy);outline:none">
     </div>
 
-    <div class="btn-row">
+    <div class="mail-input-wrap" style="margin-top:16px">
+      <label>Corps du message</label>
+      <textarea id="mailBody" rows="8" style="width:100%;border:2px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--navy);outline:none;resize:vertical"></textarea>
+    </div>
+
+    <div class="btn-row" style="margin-top:20px">
       <button class="btn btn-outline" onclick="goToStep(4)">← Retour</button>
       <button class="btn btn-mail" id="btnSendMail" onclick="sendMail()">
         <span id="spinner5" class="spinner"></span>
