@@ -291,6 +291,9 @@ function renderEditableTable() {
   document.getElementById('btn3Next').disabled = false;
   document.getElementById('saveStatus').textContent = '';
   document.getElementById('saveStatus').className = 'save-status';
+  document.getElementById('autoFillWrap').style.display = 'block';
+  document.getElementById('alertAf').classList.remove('show');
+  document.getElementById('alertAfErr').classList.remove('show');
 
   goToStep(3);
 }
@@ -373,6 +376,60 @@ async function saveChanges() {
   const status = document.getElementById('saveStatus');
   status.textContent = '✓ Sauvegardé il y a quelques secondes';
   status.className = 'save-status saved';
+}
+
+async function autoFillUrgency() {
+  const btn = document.getElementById('btnAutoFill');
+  const sp = document.getElementById('spinnerAf');
+  const alertOk = document.getElementById('alertAf');
+  const alertErr = document.getElementById('alertAfErr');
+  const info = document.getElementById('autoFillInfo');
+
+  alertOk.classList.remove('show');
+  alertErr.classList.remove('show');
+  sp.classList.add('show');
+  btn.disabled = true;
+  info.textContent = 'Analyse des objets par IA...';
+
+  try {
+    if (autoSaveTimer) {
+      clearTimeout(autoSaveTimer);
+      await saveChanges();
+    }
+
+    const res = await fetch('/api/auto-fill', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || data.error) {
+      document.getElementById('alertAfErr-msg').textContent = data.error || 'Erreur inconnue';
+      alertErr.classList.add('show');
+      sp.classList.remove('show');
+      btn.disabled = false;
+      info.textContent = '';
+      return;
+    }
+
+    courriers = data.rows;
+    modifiedIds = new Set();
+
+    document.getElementById('alertAf-msg').textContent =
+      data.modifiedCount + ' courrier(s) mis à jour sur ' + data.total;
+    alertOk.classList.add('show');
+
+    renderEditableTable();
+
+  } catch (e) {
+    document.getElementById('alertAfErr-msg').textContent = 'Erreur réseau : ' + e.message;
+    alertErr.classList.add('show');
+  }
+
+  sp.classList.remove('show');
+  btn.disabled = false;
+  info.textContent = '';
 }
 
 function updateSummary() {
@@ -560,6 +617,7 @@ function resetAll() {
   document.getElementById('btn3Next').disabled = true;
   document.getElementById('saveStatus').textContent = '';
   document.getElementById('saveStatus').className = 'save-status';
+  document.getElementById('autoFillWrap').style.display = 'none';
   const pdfBtn = document.getElementById('btnPDF');
   if (pdfBtn) pdfBtn.style.display = 'none';
 
@@ -589,6 +647,7 @@ function newReport() {
   document.getElementById('btn3Next').disabled = true;
   document.getElementById('saveStatus').textContent = '';
   document.getElementById('saveStatus').className = 'save-status';
+  document.getElementById('autoFillWrap').style.display = 'none';
   const pdfBtn = document.getElementById('btnPDF');
   if (pdfBtn) pdfBtn.style.display = 'none';
 
