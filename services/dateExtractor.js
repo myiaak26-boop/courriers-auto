@@ -10,9 +10,13 @@ const MONTHS_FR = [
 function hasDatePattern(text) {
   if (!text) return false;
   const monthRegex = /janvier|février|fevrier|mars|avril|mai|juin|juillet|aout|août|septembre|octobre|novembre|décembre|decembre/i;
-  const yearRegex = /\b\d{4}\b/;
   const numericRegex = /\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/;
   return monthRegex.test(text) || numericRegex.test(text);
+}
+
+function hasDestinatairePattern(text) {
+  if (!text) return false;
+  return /\badress[ée]e?\s+((?:à|a|au|aux))\b/i.test(text);
 }
 
 function extractDateFallback(text) {
@@ -97,8 +101,15 @@ function getUrgencyLevel(days) {
   return 'Normal';
 }
 
-async function extractFieldsFromObjetList(objetList) {
-  const needsAI = objetList.map(o => hasDatePattern(o));
+async function extractFieldsFromObjetList(objetList, requestedFields = ['urgence', 'destinataire']) {
+  const needsDate = requestedFields.includes('urgence');
+  const needsDest = requestedFields.includes('destinataire');
+
+  const needsAI = objetList.map(o => {
+    if (needsDate && hasDatePattern(o)) return true;
+    if (needsDest && hasDestinatairePattern(o)) return true;
+    return false;
+  });
   const results = objetList.map((o, i) => {
     if (!needsAI[i]) return { date: null, destinataire: null };
     return null;
@@ -114,7 +125,7 @@ async function extractFieldsFromObjetList(objetList) {
   }
 
   if (aiTexts.length > 0 && NVIDIA_API_KEY) {
-    const aiResults = await callNvidiaForFields(aiTexts);
+    const aiResults = await callNvidiaForFields(aiTexts, requestedFields);
     for (let j = 0; j < aiIndices.length; j++) {
       const idx = aiIndices[j];
       const ai = aiResults[j] || {};
@@ -139,35 +150,42 @@ async function extractFieldsFromObjetList(objetList) {
   return results;
 }
 
-async function callNvidiaForFields(objetList) {
+async function callNvidiaForFields(objetList, requestedFields = ['urgence', 'destinataire']) {
   if (!objetList.length || !NVIDIA_API_KEY) {
     return objetList.map(() => ({ date: null, destinataire: null }));
   }
 
+  const needsDate = requestedFields.includes('urgence');
+  const needsDest = requestedFields.includes('destinataire');
+
   const items = objetList.map((o, i) => `${i}. ${o || ''}`);
   const promptText = items.join('\n');
 
-  const systemMsg = 'Tu es un assistant specialise dans l\'analyse de courriers administratifs francais. Tu reponds UNIQUEMENT avec un tableau JSON valide, rien d\'autre.';
-
-  const userMsg = `Pour chaque texte ci-dessous, extrais deux informations :
-
-1. "date" : la date de debut de l'evenement ou de la periode au format YYYY-MM-DD.
+  const instructions = [];
+  if (needsDate) {
+    instructions.push(`1. "date" : la date de debut de l'evenement ou de la periode au format YYYY-MM-DD.
    - Ex: "19 juin 2026" → "2026-06-19"
    - Ex: "du 23 au 28 juin 2026" → prendre la date de debut → "2026-06-23"
    - Ex: "du 24 aout au 02 septembre 2026" → l'annee 2026 s'applique aux deux dates, prendre le debut → "2026-08-24"
-   - Ex: "du 22 au 26 juin 2026" (periode) → "2026-06-22"
-   - ATTENTION : n'invente JAMAIS une date. Si aucune date de debut d'evenement ou de periode claire, mets null.
-   - Ne considere PAS une simple annee seule (ex: "2026", "plan 2025") comme une date.
-   - Si le texte ne parle pas d'un evenement futur avec une date precise → null
-
-2. "destinataire" : le destinataire de la lettre s'il est mentionne apres "adressee a/au/aux".
+   - ATTENTION : n'invente JAMAIS une date. Si aucune date, mets null.
+   - Ne considere PAS une simple annee seule comme une date.`);
+  }
+  if (needsDest) {
+    instructions.push(`2. "destinataire" : le destinataire de la lettre s'il est mentionne apres "adressee a/au/aux".
    - Prefixe toujours par "Copie/"
    - Si contient "adressee a Madame/Monsieur le/la Ministre de X" → "Copie/Ministere de X"
    - Si contient "adressee aux Ordonnateurs du Budget de l'Etat" → "Copie/Ordonnateurs du Budget de l'Etat"
    - Si contient "adressee au Representant autorise de KPS" → "Copie/Representant autorise de KPS"
-   - Si aucun destinataire explicite → null (ne pas inventer)
+   - Si aucun destinataire explicite → null (ne pas inventer)`);
+  }
 
-Retourne UNIQUEMENT un tableau JSON valide, ex:
+  const systemMsg = 'Tu es un assistant specialise dans l\'analyse de courriers administratifs francais. Tu reponds UNIQUEMENT avec un tableau JSON valide, rien d\'autre.';
+
+  const userMsg = `Pour chaque texte ci-dessous, extrais les informations demandees :
+
+${instructions.join('\n')}
+
+Retourne UNIQUEMENT un tableau JSON, ex:
 [{"date": "2026-06-19", "destinataire": "Copie/Representant autorise de KPS"}, {"date": null, "destinataire": null}]
 
 Textes :
@@ -240,7 +258,7 @@ async function autoFillFieldsForCourriers(courriers, requestedFields = ['urgence
   }
 
   const objetList = courriers.map(c => c.objet || '');
-  const fields = await extractFieldsFromObjetList(objetList);
+  const fields = await extractFieldsFromObjetList(objetList, requestedFields);
 
   return courriers.map((c, i) => {
     const f = fields[i] || {};
