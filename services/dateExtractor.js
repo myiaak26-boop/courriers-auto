@@ -117,7 +117,7 @@ function isPastEventReport(text) {
 function getUrgencyLevel(days, text) {
   if (text && isPastEventReport(text)) return 'Normal';
   if (days === null || days === undefined) return 'Normal';
-  if (days < 1) return 'La date est passée';
+  if (days < 0) return 'La date est passée';
   if (days <= 5) return '1';
   if (days <= 10) return '2';
   return 'Normal';
