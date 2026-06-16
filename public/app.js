@@ -426,8 +426,11 @@ async function autoFillFields(fields, label) {
     if (data.destCount) parts.push(data.destCount + ' destinataire(s)');
 
     if (!parts.length) {
+      const hint = isUrgence
+        ? "Vérifiez que les objets contiennent une date (ex: '19 juin 2026')."
+        : "Vérifiez que les objets contiennent 'adressée à/au/aux' ou commencent par 'Copie de...'.";
       document.getElementById('alertAfErr-msg').textContent =
-        "L'IA n'a trouvé aucun champ à remplir. Vérifiez que les textes contiennent des dates ou 'adressée à/au/aux'.";
+        "Aucun champ trouvé. " + hint;
       alertErr.classList.add('show');
       sp.classList.remove('show');
       btn.disabled = false;
