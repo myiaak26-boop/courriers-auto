@@ -1,4 +1,4 @@
-const CACHE_NAME = 'courriers-auto-v3';
+const CACHE_NAME = 'courriers-auto-v4';
 const STATIC_ASSETS = [
   '/',
   '/index.html',

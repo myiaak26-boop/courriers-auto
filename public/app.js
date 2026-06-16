@@ -407,6 +407,7 @@ async function autoFillFields(fields, label) {
     });
 
     const data = await res.json();
+    console.log('Auto-fill response:', JSON.stringify(data));
 
     if (!res.ok || data.error) {
       document.getElementById('alertAfErr-msg').textContent = data.error || 'Erreur inconnue';
@@ -423,6 +424,17 @@ async function autoFillFields(fields, label) {
     const parts = [];
     if (data.urgenceCount) parts.push(data.urgenceCount + ' urgence(s)');
     if (data.destCount) parts.push(data.destCount + ' destinataire(s)');
+
+    if (!parts.length) {
+      document.getElementById('alertAfErr-msg').textContent =
+        "L'IA n'a trouvé aucun champ à remplir. Vérifiez que les textes contiennent des dates ou 'adressée à/au/aux'.";
+      alertErr.classList.add('show');
+      sp.classList.remove('show');
+      btn.disabled = false;
+      info.textContent = '';
+      return;
+    }
+
     document.getElementById('alertAf-msg').textContent =
       '✓ ' + parts.join(' + ') + ' mis à jour sur ' + data.total + ' courrier(s)';
     alertOk.classList.add('show');

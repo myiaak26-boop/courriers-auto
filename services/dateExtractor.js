@@ -16,7 +16,8 @@ function hasDatePattern(text) {
 
 function hasDestinatairePattern(text) {
   if (!text) return false;
-  return /\badress[ée]e?\s+((?:à|a|au|aux))\b/i.test(text);
+  return /\badress[ée]e?\s+(?:à|a|au|aux)\b/i.test(text)
+      || /^(?:la\s+)?copie\s+de\s+/i.test(text);
 }
 
 function extractDateFallback(text) {
@@ -93,7 +94,13 @@ function daysUntil(dateStr) {
   return Math.round((d - today) / 86400000);
 }
 
-function getUrgencyLevel(days) {
+function isPastEventReport(text) {
+  if (!text) return false;
+  return /(?:transmission\s+de\s+rapport|rapport|compte[\s-]?rendu|comptes[\s-]?rendus|proc[eé]s[\s-]?verbal|tenue?\s+(?:le|les|du))\b/i.test(text);
+}
+
+function getUrgencyLevel(days, text) {
+  if (text && isPastEventReport(text)) return 'Normal';
   if (days === null || days === undefined) return 'Normal';
   if (days < 1) return 'Expiré';
   if (days <= 5) return '1';
@@ -171,11 +178,15 @@ async function callNvidiaForFields(objetList, requestedFields = ['urgence', 'des
    - Ne considere PAS une simple annee seule comme une date.`);
   }
   if (needsDest) {
-    instructions.push(`2. "destinataire" : le destinataire de la lettre s'il est mentionne apres "adressee a/au/aux".
-   - Prefixe toujours par "Copie/"
-   - Si contient "adressee a Madame/Monsieur le/la Ministre de X" → "Copie/Ministere de X"
-   - Si contient "adressee aux Ordonnateurs du Budget de l'Etat" → "Copie/Ordonnateurs du Budget de l'Etat"
-   - Si contient "adressee au Representant autorise de KPS" → "Copie/Representant autorise de KPS"
+    instructions.push(`2. "destinataire" : le destinataire de la lettre.
+   - Si l'objet commence par "Copie de..." ou "La copie de...", prefixe toujours par "Copie / "
+   - Extrais l'entite apres "adressee a/au/aux"
+   - Nettoie les titres de civilite :
+     * "Madame la Ministre de X" → "X" (ex: "Ministere de l'Economie")
+     * "Madame/Monsieur le/la ... de X" → "X"
+   - Ex: "Copie de la lettre adressee au Representant autorise de KPS" → "Copie / Representant autorise de KPS"
+   - Ex: "La copie de la lettre adressee a Madame la Ministre de l'Economie" → "Copie / Ministere de l'Economie"
+   - Ex: "adressee aux Ordonnateurs du Budget" → "Copie / Ordonnateurs du Budget"
    - Si aucun destinataire explicite → null (ne pas inventer)`);
   }
 
@@ -265,7 +276,7 @@ async function autoFillFieldsForCourriers(courriers, requestedFields = ['urgence
     const days = daysUntil(f.date);
     return {
       id: c.id,
-      niveau_urgence: needsUrgence ? getUrgencyLevel(days) : null,
+      niveau_urgence: needsUrgence ? getUrgencyLevel(days, c.objet) : null,
       destinataire: (needsDestinataire && f.destinataire) ? f.destinataire : null,
       extractedDate: f.date,
       days
