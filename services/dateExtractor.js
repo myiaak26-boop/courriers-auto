@@ -96,11 +96,16 @@ function daysUntil(dateStr) {
 
 function extractDestinataireFallback(text) {
   if (!text) return null;
-  const m = text.match(/adress[ée]e?\s+(?:à|a|au|aux)\s+(.+?)(?:[,;.\n]|$)/i);
+  const m = text.match(/adress[ée]e?\s+(?:à|a|au|aux)\s+(.+)/i);
   if (!m) return null;
-  let d = m[1].trim().replace(/[,;.]+$/, '').trim();
+  let d = m[1].trim();
+  d = d.replace(/\s+(?:relative?\s+(?:à|au|aux)|concernant|portant\s+sur|objet\s*:).*$/i, '').replace(/[,;.\s]+$/, '').trim();
   if (!d) return null;
-  d = d.replace(/^(?:madame\s+|monsieur\s+)?(?:le\s+|la\s+|les\s+)?(?:ministre\s+|secrétaire\s+|secrétaire\s+général\s+|représentant\s+|directeur\s+|chef\s+|président\s+)?(?:d[ue]\s+|de\s+la\s+|de\s+l'|des\s+)?/i, '');
+  d = d.replace(/^(?:madame\s+|monsieur\s+)?(?:le\s+|la\s+|les\s+)?/i, '');
+  d = d.replace(/^ministre\s+(d[eu]\s+|de\s+la\s+|de\s+l'|des\s+)/i, 'Ministère $1');
+  d = d.replace(/^directeur\s+(d[eu]\s+|de\s+la\s+|de\s+l'|des\s+)/i, 'Direction $1');
+  d = d.replace(/^président\s+(d[eu]\s+|de\s+la\s+|de\s+l'|des\s+)/i, 'Présidence $1');
+  d = d.replace(/^secrétaire\s+général\s+(d[eu]\s+|de\s+la\s+|de\s+l'|des\s+)/i, 'Secrétariat Général $1');
   return (/^(?:la\s+)?copie\s+de\s+/i.test(text)) ? 'Copie / ' + d : d;
 }
 
