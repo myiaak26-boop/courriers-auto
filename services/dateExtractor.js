@@ -94,6 +94,16 @@ function daysUntil(dateStr) {
   return Math.round((d - today) / 86400000);
 }
 
+function extractDestinataireFallback(text) {
+  if (!text) return null;
+  const m = text.match(/adress[ée]e?\s+(?:à|a|au|aux)\s+(.+?)(?:[,;.\n]|$)/i);
+  if (!m) return null;
+  let d = m[1].trim().replace(/[,;.]+$/, '').trim();
+  if (!d) return null;
+  d = d.replace(/^(?:madame\s+|monsieur\s+)?(?:le\s+|la\s+|les\s+)?(?:ministre\s+|secrétaire\s+|secrétaire\s+général\s+|représentant\s+|directeur\s+|chef\s+|président\s+)?(?:d[ue]\s+|de\s+la\s+|de\s+l'|des\s+)?/i, '');
+  return (/^(?:la\s+)?copie\s+de\s+/i.test(text)) ? 'Copie / ' + d : d;
+}
+
 function isPastEventReport(text) {
   if (!text) return false;
   return /(?:transmission\s+de\s+rapport|rapport|compte[\s-]?rendu|comptes[\s-]?rendus|proc[eé]s[\s-]?verbal|tenue?\s+(?:le|les|du))\b/i.test(text);
@@ -137,20 +147,22 @@ async function extractFieldsFromObjetList(objetList, requestedFields = ['urgence
       const idx = aiIndices[j];
       const ai = aiResults[j] || {};
       const validated = validateDate(ai.date, objetList[idx]);
+      const dest = ai.destinataire || (needsDest ? extractDestinataireFallback(objetList[idx]) : null);
 
       if (!validated) {
         const fallback = extractDateFallback(objetList[idx]);
-        results[idx] = { date: fallback, destinataire: ai.destinataire || null };
+        results[idx] = { date: fallback, destinataire: dest };
       } else {
-        results[idx] = { date: validated, destinataire: ai.destinataire || null };
+        results[idx] = { date: validated, destinataire: dest };
       }
     }
   }
 
   for (let i = 0; i < objetList.length; i++) {
     if (!results[i]) {
-      const fallback = extractDateFallback(objetList[i]);
-      results[i] = { date: fallback, destinataire: null };
+      const date = extractDateFallback(objetList[i]);
+      const dest = needsDest ? extractDestinataireFallback(objetList[i]) : null;
+      results[i] = { date, destinataire: dest };
     }
   }
 

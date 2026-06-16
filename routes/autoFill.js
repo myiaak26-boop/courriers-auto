@@ -5,6 +5,10 @@ const { autoFillFieldsForCourriers } = require('../services/dateExtractor');
 
 router.post('/', async (req, res) => {
   try {
+    if (!process.env.NVIDIA_API_KEY) {
+      return res.status(400).json({ error: 'Clé API NVIDIA non configurée. Définissez NVIDIA_API_KEY dans les variables d\'environnement.' });
+    }
+
     const courriers = await getAllCourriers();
     if (!courriers.length) {
       return res.status(400).json({ error: 'Aucun courrier en base.' });
