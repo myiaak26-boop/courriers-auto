@@ -111,11 +111,17 @@ function extractDestinataireFallback(text) {
 
 function isPastEventReport(text) {
   if (!text) return false;
-  return /(?:transmission\s+de\s+rapport|rapport|compte[\s-]?rendu|comptes[\s-]?rendus|proc[eé]s[\s-]?verbal|tenue?\s+(?:le|les|du))\b/i.test(text);
+  return /(?:transmission\s+de\s+rapport|rapport|compte[\s-]?rendu|comptes[\s-]?rendus|proc[eé]s[\s-]?verb(?:al|aux)|tenue?s?\s+(?:le|les|du))\b/i.test(text);
+}
+
+function isDocumentReference(text) {
+  if (!text) return false;
+  return /\bconstitution\s+du\s+\d{1,2}\s+(?:janvier|février|fevrier|mars|avril|mai|juin|juillet|aout|août|septembre|octobre|novembre|décembre|decembre)\s+\d{4}\b/i.test(text);
 }
 
 function getUrgencyLevel(days, text) {
   if (text && isPastEventReport(text)) return 'Normal';
+  if (text && isDocumentReference(text)) return 'Normal';
   if (days === null || days === undefined) return 'Normal';
   if (days < 0) return 'La date est passée';
   if (days <= 5) return '1';
