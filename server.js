@@ -1,14 +1,27 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
+const rateLimit = require('express-rate-limit');
 const sgMail = require('@sendgrid/mail');
+const config = require('./config');
 
 if (process.env.SENDGRID_API_KEY) {
   sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 }
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = config.PORT;
+
+app.set('trust proxy', 1);
+
+const limiter = rateLimit({
+  windowMs: config.RATE_LIMIT_WINDOW_MS,
+  max: config.RATE_LIMIT_MAX,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Trop de requêtes. Réessayez plus tard.' },
+});
+app.use('/api/', limiter);
 
 app.use(express.json({ limit: '20mb' }));
 app.use(express.static(path.join(__dirname, 'public'), {
@@ -30,6 +43,10 @@ process.on('unhandledRejection', (err) => {
   console.error('UNHANDLED REJECTION:', err);
 });
 
-app.listen(PORT, () => {
-  console.log(`Serveur démarré sur http://localhost:${PORT}`);
-});
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log(`Serveur démarré sur http://localhost:${PORT}`);
+  });
+}
+
+module.exports = app;

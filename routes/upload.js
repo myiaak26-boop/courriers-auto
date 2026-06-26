@@ -5,7 +5,7 @@ const path = require('path');
 const router = express.Router();
 const upload = require('../middlewares/upload');
 const { processCSV } = require('../services/csv');
-const { createSession } = require('../services/db');
+const { createSession, getCurrentSessionId } = require('../services/db');
 
 router.post('/', upload.single('file'), async (req, res) => {
   try {

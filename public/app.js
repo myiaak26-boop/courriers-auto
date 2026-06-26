@@ -407,7 +407,6 @@ async function autoFillFields(fields, label) {
     });
 
     const data = await res.json();
-    console.log('Auto-fill response:', JSON.stringify(data));
 
     if (!res.ok || data.error) {
       document.getElementById('alertAfErr-msg').textContent = data.error || 'Erreur inconnue';

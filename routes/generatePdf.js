@@ -1,10 +1,18 @@
 const express = require('express');
 const router = express.Router();
+const { body, validationResult } = require('express-validator');
 const { getAllCourriers } = require('../services/db');
 const { dateToString, buildFileDateSuffix } = require('../services/xls');
 const { generatePDF } = require('../services/pdf');
 
-router.post('/', async (req, res) => {
+router.post('/', [
+  body('mode').optional().isIn(['all', 'assigne_non_traite', 'en_retard']),
+  body('dateDebut').optional().isString(),
+  body('dateFin').optional().isString(),
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return res.status(400).json({ error: 'Validation échouée', details: errors.array() });
+
   try {
     const { mode, dateDebut, dateFin } = req.body;
     const dbRows = await getAllCourriers();
@@ -35,9 +43,12 @@ router.post('/', async (req, res) => {
     res.setHeader('X-File-Name', encodeURIComponent(fileName));
     res.setHeader('X-Count', rows.length);
 
+    doc.on('error', (err) => {
+      if (!res.headersSent) res.status(500).json({ error: 'Erreur génération PDF: ' + err.message });
+    });
     doc.pipe(res);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    if (!res.headersSent) res.status(400).json({ error: err.message });
   }
 });
 

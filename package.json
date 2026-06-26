@@ -4,12 +4,16 @@
   "description": "Générateur de situations courriers - Primature",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node --test tests/*.test.js"
   },
   "dependencies": {
     "@sendgrid/mail": "^8.1.6",
+    "better-sqlite3": "^12.11.1",
     "dotenv": "^17.4.2",
     "express": "^4.18.2",
+    "express-rate-limit": "^8.5.2",
+    "express-validator": "^7.3.2",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^6.9.7",
     "pdfkit": "^0.19.1",

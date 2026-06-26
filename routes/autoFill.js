@@ -1,9 +1,15 @@
 const express = require('express');
 const router = express.Router();
+const { body, validationResult } = require('express-validator');
 const { getAllCourriers, updateCourrier } = require('../services/db');
 const { autoFillFieldsForCourriers } = require('../services/dateExtractor');
 
-router.post('/', async (req, res) => {
+router.post('/', [
+  body('fields').optional().isArray(),
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return res.status(400).json({ error: 'Validation échouée', details: errors.array() });
+
   try {
     if (!process.env.NVIDIA_API_KEY) {
       return res.status(400).json({ error: 'Clé API NVIDIA non configurée. Définissez NVIDIA_API_KEY dans les variables d\'environnement.' });
