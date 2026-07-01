@@ -66,6 +66,15 @@ function goToStep(n) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+function switchImportMode(mode) {
+  document.querySelectorAll('.import-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
+  document.getElementById('import-gec').style.display = mode === 'import' ? 'block' : 'none';
+  document.getElementById('import-reimport').style.display = mode === 'reimport' ? 'block' : 'none';
+  document.getElementById('uploadSuccess').style.display = 'none';
+  document.getElementById('btn1Next').disabled = true;
+  document.getElementById('alert1').classList.remove('show');
+}
+
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
 
@@ -77,6 +86,18 @@ dropZone.addEventListener('drop', e => {
   if (e.dataTransfer.files[0]) handleUpload(e.dataTransfer.files[0]);
 });
 fileInput.addEventListener('change', e => { if (e.target.files[0]) handleUpload(e.target.files[0]); });
+
+const dropZoneReimport = document.getElementById('dropZoneReimport');
+const fileInputReimport = document.getElementById('fileInputReimport');
+
+dropZoneReimport.addEventListener('click', () => fileInputReimport.click());
+dropZoneReimport.addEventListener('dragover', e => { e.preventDefault(); dropZoneReimport.classList.add('drag'); });
+dropZoneReimport.addEventListener('dragleave', () => dropZoneReimport.classList.remove('drag'));
+dropZoneReimport.addEventListener('drop', e => {
+  e.preventDefault(); dropZoneReimport.classList.remove('drag');
+  if (e.dataTransfer.files[0]) handleReimport(e.dataTransfer.files[0]);
+});
+fileInputReimport.addEventListener('change', e => { if (e.target.files[0]) handleReimport(e.target.files[0]); });
 
 async function handleUpload(file) {
   const sp = document.getElementById('spinner1');
@@ -93,6 +114,57 @@ async function handleUpload(file) {
 
   try {
     const res = await fetch('/api/upload', { method: 'POST', body: formData });
+    const data = await res.json();
+
+    if (!res.ok || data.error) {
+      alert1msg.textContent = data.error || 'Erreur inconnue';
+      alert1.classList.add('show');
+      sp.classList.remove('show');
+      return;
+    }
+
+    sessionId = data.sessionId;
+    totalLines = data.count;
+
+    const preview = data.preview || [];
+    const cols = preview.length ? Object.keys(preview[0]) : [];
+    let html = '<div class="table-wrap"><table><thead><tr>';
+    cols.forEach(c => html += '<th>' + c + '</th>');
+    html += '</tr></thead><tbody>';
+    preview.forEach(row => {
+      html += '<tr>';
+      cols.forEach(c => html += '<td>' + (row[c] || '') + '</td>');
+      html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+    if (preview.length < totalLines) {
+      html += '<p style="font-size:12px;color:var(--muted);margin-top:8px;text-align:center">… et ' + (totalLines - preview.length) + ' autre(s) ligne(s)</p>';
+    }
+    document.getElementById('previewTable').innerHTML = html;
+    document.getElementById('uploadSuccess').style.display = 'block';
+    btn.disabled = false;
+
+  } catch(e) {
+    alert1msg.textContent = 'Erreur réseau : ' + e.message;
+    alert1.classList.add('show');
+  }
+  sp.classList.remove('show');
+}
+
+async function handleReimport(file) {
+  const sp = document.getElementById('spinner1');
+  const btn = document.getElementById('btn1Next');
+  const alert1 = document.getElementById('alert1');
+  const alert1msg = document.getElementById('alert1-msg');
+
+  alert1.classList.remove('show');
+  sp.classList.add('show');
+  btn.disabled = true;
+
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fetch('/api/reimport', { method: 'POST', body: formData });
     const data = await res.json();
 
     if (!res.ok || data.error) {
@@ -678,6 +750,7 @@ function resetAll() {
     ind.classList.remove('active', 'done');
   }
   goToStep(1);
+  switchImportMode('import');
 }
 
 function newReport() {

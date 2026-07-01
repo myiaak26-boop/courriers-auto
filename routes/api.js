@@ -8,4 +8,5 @@ router.use('/generate-pdf', require('./generatePdf'));
 router.use('/send-mail', require('./sendMail'));
 router.use('/mail-preview', require('./mailPreview'));
 router.use('/auto-fill', require('./autoFill'));
+router.use('/reimport', require('./reimport'));
 module.exports = router;

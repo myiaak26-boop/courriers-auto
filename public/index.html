@@ -55,11 +55,27 @@
 
     <div id="alert1" class="alert alert-error"> <span id="alert1-msg"></span></div>
 
-    <div class="drop-zone" id="dropZone">
-      <div class="drop-icon">📊</div>
-      <div class="drop-title">Glissez votre fichier ici</div>
-      <div class="drop-sub">ou cliquez pour choisir un fichier Excel (.xlsx) ou CSV</div>
-      <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+    <div class="import-tabs">
+      <button class="import-tab active" data-mode="import" onclick="switchImportMode('import')">📥 Import GEC</button>
+      <button class="import-tab" data-mode="reimport" onclick="switchImportMode('reimport')">🔄 Réimport généré</button>
+    </div>
+
+    <div id="import-gec">
+      <div class="drop-zone" id="dropZone">
+        <div class="drop-icon">📊</div>
+        <div class="drop-title">Glissez votre fichier ici</div>
+        <div class="drop-sub">ou cliquez pour choisir un fichier Excel (.xlsx) ou CSV</div>
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+      </div>
+    </div>
+
+    <div id="import-reimport" style="display:none">
+      <div class="drop-zone" id="dropZoneReimport">
+        <div class="drop-icon">🔄</div>
+        <div class="drop-title">Réimportez un fichier généré</div>
+        <div class="drop-sub">Glissez le fichier .xls que vous avez téléchargé précédemment pour le modifier</div>
+        <input type="file" id="fileInputReimport" accept=".xls,.xlsx">
+      </div>
     </div>
 
     <div id="uploadSuccess" style="display:none;margin-top:16px">

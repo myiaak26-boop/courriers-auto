@@ -172,6 +172,26 @@ main { max-width: 960px; margin: 0 auto; padding: 32px 20px 60px; }
 .drop-title { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
 .drop-sub { font-size: 13px; color: var(--muted); }
 #fileInput { display: none; }
+#fileInputReimport { display: none; }
+#import-reimport .drop-zone { border-color: #cddaf0; }
+#import-reimport .drop-zone:hover, #import-reimport .drop-zone.drag { border-color: var(--green); background: #f0fdf4; }
+
+.import-tabs {
+  display: flex; gap: 0; margin-bottom: 20px;
+  background: var(--bg); border-radius: 12px; padding: 4px;
+}
+.import-tab {
+  flex: 1; padding: 10px 16px; border: none; border-radius: 10px;
+  font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all 0.2s;
+  background: transparent; color: var(--muted);
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.import-tab.active {
+  background: white; color: var(--navy);
+  box-shadow: 0 2px 8px rgba(15,37,69,0.1);
+}
+.import-tab:hover:not(.active) { color: var(--navy); }
 
 .badge {
   display: inline-flex; align-items: center; gap: 6px;
