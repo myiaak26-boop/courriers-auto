@@ -398,11 +398,11 @@ td.modified { background: #fef3c7 !important; outline: 2px solid var(--accent); 
 
 #editableTable { table-layout: fixed; }
 #editableTable th:nth-child(1),
-#editableTable td:nth-child(1) { width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#editableTable td:nth-child(1) { width: 70px; white-space: nowrap; }
 #editableTable th:nth-child(2),
-#editableTable td:nth-child(2) { width: 18%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#editableTable td:nth-child(2) { width: 18%; }
 #editableTable th:nth-child(3),
-#editableTable td:nth-child(3) { width: 14%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#editableTable td:nth-child(3) { width: 14%; }
 #editableTable th:nth-child(5),
 #editableTable td:nth-child(5) { width: 105px; white-space: nowrap; }
 #editableTable th:nth-child(6),
@@ -410,7 +410,7 @@ td.modified { background: #fef3c7 !important; outline: 2px solid var(--accent); 
 #editableTable th:nth-child(7),
 #editableTable td:nth-child(7) { width: 90px; white-space: nowrap; }
 #editableTable th:nth-child(8),
-#editableTable td:nth-child(8) { width: 15%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#editableTable td:nth-child(8) { width: 15%; }
 
 #btnPDF {
   background: linear-gradient(135deg, #dc2626, #ef4444);
