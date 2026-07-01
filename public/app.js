@@ -7,6 +7,7 @@ let modifiedIds = new Set();
 let dataStored = false;
 let ccRecipients = [];
 let autoSaveTimer = null;
+let isReimport = false;
 
 function addCc(email) {
   const e = email.trim();
@@ -176,30 +177,46 @@ async function handleReimport(file) {
 
     sessionId = data.sessionId;
     totalLines = data.count;
+    isReimport = true;
 
-    const preview = data.preview || [];
-    const cols = preview.length ? Object.keys(preview[0]) : [];
-    let html = '<div class="table-wrap"><table><thead><tr>';
-    cols.forEach(c => html += '<th>' + c + '</th>');
-    html += '</tr></thead><tbody>';
-    preview.forEach(row => {
-      html += '<tr>';
-      cols.forEach(c => html += '<td>' + (row[c] || '') + '</td>');
-      html += '</tr>';
+    sp.textContent = 'Stockage en base...';
+
+    const storeRes = await fetch('/api/store', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId, mode: 'all', dateDebut: '', dateFin: '' })
     });
-    html += '</tbody></table></div>';
-    if (preview.length < totalLines) {
-      html += '<p style="font-size:12px;color:var(--muted);margin-top:8px;text-align:center">… et ' + (totalLines - preview.length) + ' autre(s) ligne(s)</p>';
+    const storeData = await storeRes.json();
+
+    if (!storeRes.ok || storeData.error) {
+      alert1msg.textContent = storeData.error || 'Erreur stockage';
+      alert1.classList.add('show');
+      sp.classList.remove('show');
+      btn.disabled = false;
+      return;
     }
-    document.getElementById('previewTable').innerHTML = html;
-    document.getElementById('uploadSuccess').style.display = 'block';
-    btn.disabled = false;
+
+    sp.textContent = '';
+
+    courriers = storeData.rows;
+    dataStored = true;
+    modifiedIds = new Set();
+
+    document.querySelectorAll('.mode-card').forEach(c => c.classList.add('disabled'));
+    document.getElementById('dateDebut').disabled = true;
+    document.getElementById('dateFin').disabled = true;
+
+    renderEditableTable();
 
   } catch(e) {
     alert1msg.textContent = 'Erreur réseau : ' + e.message;
     alert1.classList.add('show');
   }
   sp.classList.remove('show');
+}
+
+function goBackFromStep3() {
+  goToStep(isReimport ? 1 : 2);
 }
 
 document.getElementById('btn1Next').addEventListener('click', () => goToStep(2));
@@ -725,6 +742,7 @@ function resetAll() {
   modifiedIds = new Set();
   dataStored = false;
   ccRecipients = [];
+  isReimport = false;
 
   document.getElementById('uploadSuccess').style.display = 'none';
   document.getElementById('fileInput').value = '';
