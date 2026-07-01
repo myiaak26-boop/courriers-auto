@@ -380,7 +380,7 @@ function renderEditableTable() {
   document.getElementById('btn3Next').disabled = false;
   document.getElementById('saveStatus').textContent = '';
   document.getElementById('saveStatus').className = 'save-status';
-  document.getElementById('autoFillWrap').style.display = 'block';
+    document.getElementById('autoFillWrap').style.display = isReimport ? 'none' : 'block';
   document.getElementById('alertAf').classList.remove('show');
   document.getElementById('alertAfErr').classList.remove('show');
 
