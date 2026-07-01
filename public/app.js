@@ -581,7 +581,8 @@ function updateMailSubjectPreview() {
     assigne_non_traite: 'SITUATION DES COURRIERS ASSIGNÉS NON TRAITÉS',
     en_retard: 'SITUATION DES COURRIERS EN RETARD DE TRAITEMENT'
   };
-  document.getElementById('mailSubjectPreview').textContent = (titles[currentMode] || '') + (label ? ' — ' + label : '');
+  const el = document.getElementById('mailSubjectPreview');
+  if (el) el.textContent = (titles[currentMode] || '') + (label ? ' — ' + label : '');
 }
 
 async function generateFile() {
