@@ -1,4 +1,4 @@
-const CACHE_NAME = 'courriers-auto-v4';
+const CACHE_NAME = 'courriers-auto-v5';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -8,7 +8,15 @@ const STATIC_ASSETS = [
 
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS)).then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then(async cache => {
+      for (const url of STATIC_ASSETS) {
+        try {
+          await cache.add(url);
+        } catch (e) {
+          console.warn('SW: échec cache ' + url, e.message);
+        }
+      }
+    }).then(() => self.skipWaiting())
   );
 });
 
