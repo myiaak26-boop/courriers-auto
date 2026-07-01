@@ -397,9 +397,9 @@ td.modified { background: #fef3c7 !important; outline: 2px solid var(--accent); 
 .comfort th { padding: 10px 12px; }
 
 #editableTable th:nth-child(1),
-#editableTable td:nth-child(1) { width: 1%; white-space: nowrap; }
+#editableTable td:nth-child(1) { width: 0; white-space: nowrap; }
 #editableTable th:nth-child(4),
-#editableTable td:nth-child(4) { width: 100%; white-space: normal; }
+#editableTable td:nth-child(4) { width: 100%; }
 
 #btnPDF {
   background: linear-gradient(135deg, #dc2626, #ef4444);
